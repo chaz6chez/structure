@@ -11,7 +11,13 @@ use Structure\Struct;
 class Check extends Struct {
     /**
      * @var
-     * @rule string,max:3|我操
+     * @rule string,max:3|我操a
      */
-    public $check;
+    public $a;
+
+    /**
+     * @var
+     * @rule int,max:2|我操b
+     */
+    public $b;
 }
