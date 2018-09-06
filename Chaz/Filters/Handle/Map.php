@@ -4,9 +4,9 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz\Filter\Handle;
+namespace Chaz\Filters\Handle;
 
-use Chaz\Filter\Filter;
+use Chaz\Filters\Filter;
 
 class Map extends Filter {
     

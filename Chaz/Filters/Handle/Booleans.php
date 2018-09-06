@@ -1,12 +1,12 @@
 <?php
-
-namespace Chaz\Filter\Handle;
 # -------------------------- #
 #  Name: chaz6chez           #
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-use Chaz\Filter\Filter;
+namespace Chaz\Filters\Handle;
+
+use Chaz\Filters\Filter;
 
 class Booleans extends Filter {
     

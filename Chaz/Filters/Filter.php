@@ -4,7 +4,7 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz\Filter;
+namespace Chaz\Filters;
 
 abstract class Filter {
 
@@ -32,7 +32,7 @@ abstract class Filter {
     protected static $filterName;
 
     /**
-     * Filter constructor.
+     * Filters constructor.
      * @param array $options
      */
     final public function __construct(array $options = []) {

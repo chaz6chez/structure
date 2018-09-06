@@ -4,7 +4,7 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz\Filter\Handle;
+namespace Chaz\Filters\Handle;
 
 class Regex extends Strings {
     

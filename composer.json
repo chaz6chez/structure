@@ -17,5 +17,10 @@
             "Chaz\\": "Chaz/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Chaz\\Test\\": "Test/"
+        }
+    },
     "minimum-stability": "dev"
 }

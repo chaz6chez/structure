@@ -6,7 +6,7 @@
 # -------------------------- #
 namespace Chaz;
 
-use Chaz\Filter\Filter;
+use Chaz\Filters\Filter;
 
 class Structure {
 
