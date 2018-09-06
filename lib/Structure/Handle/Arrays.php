@@ -4,9 +4,9 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz\Filters\Handle;
+namespace Structure\Handle;
 
-use Chaz\Filters\Filter;
+use Structure\Filter;
 
 class Arrays extends Filter {
 

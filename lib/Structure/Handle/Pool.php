@@ -4,11 +4,11 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz\Filters\Handle;
+namespace Structure\Handle;
 
-use Chaz\Filters\Filter;
+use Structure\Filter;
 
-class Chain extends Filter {
+class Pool extends Filter {
     
     protected $defaultOptions = [
         'filters' => [],
@@ -17,20 +17,21 @@ class Chain extends Filter {
     public function filter($var) {
         foreach (self::$options['filters'] as $filter) {
             $filter = self::factory($filter);
-            $var = $filter->filter($var);
+            if ($filter->validate($var)) {
+                return $filter->filter($var);
+            }
         }
-        return $var;
+        return null;
     }
 
     public function validate($var) {
         foreach (self::$options['filters'] as $filter) {
             $filter = self::factory($filter);
-            if (!$filter->validate($var)) {
-                return false;
+            if ($filter->validate($var)) {
+                return true;
             }
-            $var = $filter->filter($var);
         }
-        return true;
+        return false;
     }
 
 }

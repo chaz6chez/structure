@@ -4,11 +4,11 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz\Test;
+namespace Test;
 
-use Chaz\Structure;
+use Structure\Struct;
 
-class Check extends Structure {
+class Check extends Struct {
     /**
      * @var
      * @rule string,max:3|我操

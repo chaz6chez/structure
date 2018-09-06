@@ -4,11 +4,9 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz;
+namespace Structure;
 
-use Chaz\Filters\Filter;
-
-class Structure {
+class Struct {
 
     /**
      * @var array 验证信息
@@ -26,7 +24,7 @@ class Structure {
     protected $_scene = '';
 
     /**
-     * Structure constructor.
+     * Struct constructor.
      * @param null $data
      * @param string $scene
      * @throws \ReflectionException

@@ -4,7 +4,7 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-namespace Chaz\Filters;
+namespace Structure;
 
 abstract class Filter {
 
@@ -12,17 +12,17 @@ abstract class Filter {
     const CLASS_ERROR = '类名必须是Handle的实例';
 
     protected static $filters = [
-        'array'  => 'Chaz\Filters\Handle\Arrays',
-        'bool'   => 'Chaz\Filters\Handle\Booleans',
-        'float'  => 'Chaz\Filters\Handle\Floats',
-        'int'    => 'Chaz\Filters\Handle\Ints',
-        'ip'     => 'Chaz\Filters\Handle\IP',
-        'object' => 'Chaz\Filters\Handle\Object',
-        'string' => 'Chaz\Filters\Handle\Strings',
-        'pool'   => 'Chaz\Filters\Handle\Pool',
-        'map'    => 'Chaz\Filters\Handle\Map',
-        'url'    => 'Chaz\Filters\Handle\URL',
-        'regex'  => 'Chaz\Filters\Handle\Regex',
+        'array'  => 'Structure\Handle\Arrays',
+        'bool'   => 'Structure\Handle\Booleans',
+        'float'  => 'Structure\Handle\Floats',
+        'int'    => 'Structure\Handle\Ints',
+        'ip'     => 'Structure\Handle\IP',
+        'object' => 'Structure\Handle\Object',
+        'string' => 'Structure\Handle\Strings',
+        'pool'   => 'Structure\Handle\Pool',
+        'map'    => 'Structure\Handle\Map',
+        'url'    => 'Structure\Handle\URL',
+        'regex'  => 'Structure\Handle\Regex',
     ];
 
     protected $defaultOptions = [];
@@ -32,7 +32,7 @@ abstract class Filter {
     protected static $filterName;
 
     /**
-     * Filters constructor.
+     * Struct constructor.
      * @param array $options
      */
     final public function __construct(array $options = []) {
