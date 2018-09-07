@@ -10,7 +10,7 @@ use Structure\Filter;
 
 class Booleans extends Filter {
     
-    protected $defaultOptions = [
+    protected $_defaultOptions = [
         'default' => null,
     ];
 

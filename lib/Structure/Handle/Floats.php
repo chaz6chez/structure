@@ -10,7 +10,7 @@ use Structure\Filter;
 
 class Floats extends Filter {
     
-    protected $defaultOptions = [
+    protected $_defaultOptions = [
         'min' => null,
         'max' => null,
     ];
@@ -20,10 +20,10 @@ class Floats extends Filter {
             return null;
         }
         $var = (float) $var;
-        if (null !== self::$options['min'] && self::$options['min'] > $var) {
-            return self::$options['min'];
-        } elseif (null !== self::$options['max'] && self::$options['max'] < $var) {
-            return self::$options['max'];
+        if (null !== $this->_options['min'] && $this->_options['min'] > $var) {
+            return $this->_options['min'];
+        } elseif (null !== $this->_options['max'] && $this->_options['max'] < $var) {
+            return $this->_options['max'];
         }
         return $var;
     }

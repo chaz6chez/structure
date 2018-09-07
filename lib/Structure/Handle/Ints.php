@@ -12,7 +12,7 @@ defined('PHP_INT_MIN') or define('PHP_INT_MIN', ~PHP_INT_MAX);
 
 class Ints extends Filter {
     
-    protected $defaultOptions = [
+    protected $_defaultOptions = [
         'min' => PHP_INT_MIN,
         'max' => PHP_INT_MAX,
     ];
@@ -22,10 +22,10 @@ class Ints extends Filter {
             return null;
         }
         $var = (int) $var;
-        if (self::$options['min'] > $var) {
-            return self::$options['min'];
-        } elseif (self::$options['max'] < $var) {
-            return self::$options['max'];
+        if ($this->_options['min'] > $var) {
+            return $this->_options['min'];
+        } elseif ($this->_options['max'] < $var) {
+            return $this->_options['max'];
         }
         return $var;
     }

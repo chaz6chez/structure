@@ -8,7 +8,7 @@ namespace Structure\Handle;
 
 class Regex extends Strings {
     
-    protected $defaultOptions = array(
+    protected $_defaultOptions = array(
         'min' => 0,
         'max' => PHP_INT_MAX,
         'regex' => '/.?/',
@@ -16,7 +16,7 @@ class Regex extends Strings {
 
     public function filter($var) {
         $var = parent::filter($var);
-        if (!preg_match(self::$options['regex'], $var)) {
+        if (!preg_match($this->_options['regex'], $var)) {
             return null;
         }
         return $var;

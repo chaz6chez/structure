@@ -11,7 +11,7 @@ use Structure\Struct;
 class Check extends Struct {
     /**
      * @var
-     * @rule string,max:3|我操a
+     * @rule string,max:3,min:1|我操a
      */
     public $a;
 

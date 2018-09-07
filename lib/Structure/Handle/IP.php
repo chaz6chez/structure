@@ -10,7 +10,7 @@ use Structure\Filter;
 
 class IP extends Filter {
     
-    protected $defaultOptions = [
+    protected $_defaultOptions = [
         'ipv4' => true,
         'ipv6' => true,
         'private' => true,
@@ -19,16 +19,16 @@ class IP extends Filter {
 
     public function filter($var) {
         $flags = 0;
-        if (self::$options['ipv4']) {
+        if ($this->_options['ipv4']) {
             $flags |= FILTER_FLAG_IPV4;
         }
-        if (self::$options['ipv6']) {
+        if ($this->_options['ipv6']) {
             $flags |= FILTER_FLAG_IPV6;
         }
-        if (!self::$options['private']) {
+        if (!$this->_options['private']) {
             $flags |= FILTER_FLAG_NO_PRIV_RANGE;
         }
-        if (!self::$options['reserved']) {
+        if (!$this->_options['reserved']) {
             $flags |= FILTER_FLAG_NO_RES_RANGE;
         }
         return filter_var($var, FILTER_VALIDATE_IP, $flags);

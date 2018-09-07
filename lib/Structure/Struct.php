@@ -24,6 +24,24 @@ class Struct {
     protected $_scene = '';
 
     /**
+     * @var string Rule内容键
+     * rule content key
+     */
+    protected $_rck = '';
+
+    /**
+     * @var string Rule内容
+     * rule content string
+     */
+    protected $_rcs = '';
+
+    /**
+     * @var array Rule内容配置
+     * rule content options
+     */
+    protected $_rco = [];
+
+    /**
      * Struct constructor.
      * @param null $data
      * @param string $scene
@@ -168,16 +186,19 @@ class Struct {
                     if ($this->checkScene($r['scene'])) {
                         $validator = $r['content'];
 
+                        # 创建错误(校验过程)
                         if (
                             (is_string($validator) and call_user_func($validator, $data[$f]) === false) or # 调用函数
                             (is_array($validator) and call_user_func($validator, $data[$f], $f, $data) === false) or # 调用实例方法
                             ($validator instanceof Filter and $validator->validate($data[$f]) === false) # 调用验证库
                         ) {
+                            //todo Filter中validate方法返回数据有误，所以无法正常创建错误信息
                             $this->addError($f, $r['error']);
                             $passed = false;
                         }
                     }
                 }
+                exit;
             }
         }
 
@@ -317,15 +338,27 @@ class Struct {
                         # 规则
                         case 'rule':
                             $rc = explode('|', $rc, 2);
-
                             $rc[0] = trim($rc[0]);
+
+                            $rca = explode(',', $rc[0]);
+                            $this->_rck = trim($rca[0]);
+                            $this->_rcs = trim($rca[1]);
+
+//                            foreach ($rca as $k => $o){
+//                                if($k == 0){
+//                                    continue;
+//                                }
+//                                $o = explode(':', $o, 2);
+//                                $this->_rco[$o[0]] = $o[1];
+//                            }
+
                             $rule = [];
                             switch (true) {
-                                case substr($rc[0], 0, 4) === 'func': # 调用函数验证,传入当前字段的值
-                                    $rule['content'] = substr($rc[0], 5);
+                                case $this->_rck === 'func': # 调用函数验证,传入当前字段的值
+                                    $rule['content'] = $this->_rcs;
                                     break;
-                                case substr($rc[0], 0, 6) === 'method': # 调用实例方法验证,传入当字段名称和值
-                                    $rule['content'] = [$this, substr($rc[0], 7)];
+                                case $this->_rck === 'method': # 调用实例方法验证,传入当字段名称和值
+                                    $rule['content'] = [$this, $this->_rcs];
                                     break;
                                 default: # 默认调用验证库
                                     $rule['content'] = Filter::factory($rc[0]);

@@ -8,10 +8,10 @@ namespace Structure;
 
 abstract class Filter {
 
-    const INVALID_FILTER_SPECIFIED = '无效的过滤器';
-    const CLASS_ERROR = '类名必须是Handle的实例';
+    const INVALID_FILTER_SPECIFIED = '无效的过滤器: ';
+    const CLASS_MUST_BE_HANDLE_INSTANCE = '类名必须是Handle的实例';
 
-    protected static $filters = [
+    protected static $_filters = [
         'array'  => 'Structure\Handle\Arrays',
         'bool'   => 'Structure\Handle\Booleans',
         'float'  => 'Structure\Handle\Floats',
@@ -25,11 +25,11 @@ abstract class Filter {
         'regex'  => 'Structure\Handle\Regex',
     ];
 
-    protected $defaultOptions = [];
+    protected $_filterName = '';
 
-    protected static $options = [];
+    protected $_defaultOptions = [];
 
-    protected static $filterName;
+    protected $_options = [];
 
     /**
      * Struct constructor.
@@ -67,14 +67,15 @@ abstract class Filter {
             return $filter;
         }
         # 开始分析
-        static::parse($filter);
-
-        if (!isset(self::$filters[self::$filterName])) {
-            throw new \InvalidArgumentException(self::INVALID_FILTER_SPECIFIED . ': ' . $filter);
+        $res = static::parse($filter);
+        $filterName = $res[0];
+        $options = $res[1];
+        if (!isset(self::$_filters[$filterName])) {
+            throw new \InvalidArgumentException(self::INVALID_FILTER_SPECIFIED . $filter);
         }
-        $class = self::$filters[self::$filterName];
+        $class = self::$_filters[$filterName];
         # 返回实例
-        return new $class(self::$options);
+        return new $class($options);
     }
 
     /**
@@ -84,9 +85,9 @@ abstract class Filter {
      */
     public static function register($name, $class) {
         if (!is_subclass_of($class, __CLASS__)) {
-            throw new \InvalidArgumentException(self::CLASS_ERROR);
+            throw new \InvalidArgumentException(self::CLASS_MUST_BE_HANDLE_INSTANCE);
         }
-        self::$filters[strtolower($name)] = $class;
+        self::$_filters[strtolower($name)] = $class;
     }
 
     /**
@@ -94,7 +95,7 @@ abstract class Filter {
      * @return array
      */
     public function getOptions() {
-        return self::$options;
+        return $this->_options;
     }
 
     /**
@@ -104,7 +105,7 @@ abstract class Filter {
      * @return $this
      */
     public function setOption($key, $value) {
-        self::$options[$key] = $value;
+        $this->_options[$key] = $value;
         return $this;
     }
 
@@ -114,12 +115,13 @@ abstract class Filter {
      * @return $this
      */
     public function setOptions(array $options) {
-        self::$options = array_merge($options, $this->defaultOptions);
+        $this->_options = array_merge($this->_defaultOptions,$options);
         return $this;
     }
     /**
      * 分析器
      * @param $filter
+     * @return array
      */
     protected static function parse($filter) {
         $parts = explode(',', $filter);
@@ -134,7 +136,6 @@ abstract class Filter {
             $partArr = explode(':', $part, 2);
             $options[$partArr[0]] = $partArr[1];
         }
-        self::$filterName = $filterName;
-        self::$options = $options;
+        return [$filterName,$options];
     }
 }

@@ -10,11 +10,13 @@ use Structure\Filter;
 
 class Strings extends Filter {
 
+    protected $_filterName = 'string 过滤器';
+
     /**
      * 默认配置
      * @var array
      */
-    protected $defaultOptions = [
+    protected $_defaultOptions = [
         'min' => 0,
         'max' => PHP_INT_MAX,
     ];
@@ -32,9 +34,9 @@ class Strings extends Filter {
             return null;
         }
         $var = (string) $var;
-        if (self::$options['min'] > strlen($var)) {
+        if ($this->_options['min'] > strlen($var)) {
             return null;
-        } elseif (self::$options['max'] < strlen($var)) {
+        } elseif ($this->_options['max'] < strlen($var)) {
             return null;
         }
         return $var;
