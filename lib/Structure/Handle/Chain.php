@@ -14,6 +14,7 @@ class Chain extends Filter {
         'filters' => [],
     ];
 
+
     public function filter($var) {
         foreach ($this->_options['filters'] as $filter) {
             $filter = self::factory($filter);
