@@ -9,18 +9,19 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class URL extends Filter {
-    
-    protected $defaultOptions = [
+
+    protected $_filterName = 'url 过滤器';
+    protected $_defaultOptions = [
         'path' => false,
         'query' => false,
     ];
 
     public function filter($var) {
         $flags = 0;
-        if (self::$options['path']) {
+        if ($this->_options['path']) {
             $flags |= FILTER_FLAG_PATH_REQUIRED;
         }
-        if (self::$options['query']) {
+        if ($this->_options['query']) {
             $flags |= FILTER_FLAG_QUERY_REQUIRED;
         }
         return filter_var($var, FILTER_VALIDATE_URL, $flags);

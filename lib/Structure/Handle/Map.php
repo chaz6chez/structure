@@ -9,8 +9,9 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Map extends Filter {
-    
-    protected $defaultOptions = [
+
+    protected $_filterName = 'map 过滤器';
+    protected $_defaultOptions = [
         'filters' => [],
     ];
 
@@ -20,7 +21,7 @@ class Map extends Filter {
         }
         $isArray = is_array($var) || $var instanceof \ArrayAccess;
 
-        foreach (self::$options['filters'] as $key => $filter) {
+        foreach ($this->_options['filters'] as $key => $filter) {
             $filter = self::factory($filter);
             if ($isArray) {
                 if (!isset($var[$key])) {

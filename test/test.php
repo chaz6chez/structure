@@ -4,17 +4,35 @@
 #  Email: admin@chaz6chez.cn #
 #  Date: 2018/9/6            #
 # -------------------------- #
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/../vendor/autoload.php';
+function dump($var){
+    print_r($var);
+    exit;
+}
+header("Content-type: text/html; charset=utf-8");
 class Go{
+    /**
+     * @return array|null|string
+     * @throws ReflectionException
+     */
     public function to(){
-        $a = \Chaz\Test\Check::factory(['check' => 12345]);
+        $a = \Test\Check::factory([
+            'a' => '',
+            'b' => '1',
+        ]);
+//        $a = \Example\User::factory([
+//            'a' => '1234',
+//            'b' => '1',
+//        ]);
         $a->validate();
         if($a->hasError()){
-            return $a->getError();
+            dump($a->getError());
         }
-        return $a;
+        print_r($a->toArray(TRUE));
+
     }
+
 }
 
 $a = new Go();
-print_r( $a->to());
+print_r($a->to());

@@ -9,8 +9,9 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Object extends Filter {
-    
-    protected $defaultOptions = [
+
+    protected $_filterName = 'obj 过滤器';
+    protected $_defaultOptions = [
         'class' => '',
     ];
 
@@ -18,7 +19,7 @@ class Object extends Filter {
         if (!is_object($var)) {
             return null;
         }
-        if (self::$options['class'] && !$var instanceof self::$options['class']) {
+        if ($this->_options['class'] && !$var instanceof $this->_options['class']) {
             return null;
         }
         return $var;

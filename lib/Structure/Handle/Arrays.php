@@ -10,7 +10,8 @@ use Structure\Filter;
 
 class Arrays extends Filter {
 
-    protected $defaultOptions = [
+    protected $_filterName = 'array 过滤器';
+    protected $_defaultOptions = [
         'min' => 0,
         'max' => PHP_INT_MAX,
         'keys' => null,
@@ -22,21 +23,21 @@ class Arrays extends Filter {
             return null;
         }
         $count = count($var);
-        if (self::$options['min'] > $count) {
+        if ($this->_options['min'] > $count) {
             return null;
-        } elseif (self::$options['max'] < $count) {
+        } elseif ($this->_options['max'] < $count) {
             return null;
         }
-        if (self::$options['keys']) {
-            $filter = self::factory(self::$options['keys']);
+        if ($this->_options['keys']) {
+            $filter = self::factory($this->_options['keys']);
             foreach ($var as $key => $value) {
                 if (!$filter->validate($key)) {
                     unset($var[$key]);
                 }
             }
         }
-        if (self::$options['values']) {
-            $filter = self::factory(self::$options['values']);
+        if ($this->_options['values']) {
+            $filter = self::factory($this->_options['values']);
             foreach ($var as $key => $value) {
                 if (!$filter->validate($value)) {
                     unset($var[$key]);

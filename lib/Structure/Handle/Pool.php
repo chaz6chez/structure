@@ -9,13 +9,14 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Pool extends Filter {
-    
-    protected $defaultOptions = [
+
+    protected $_filterName = 'pool 过滤器';
+    protected $_defaultOptions = [
         'filters' => [],
     ];
 
     public function filter($var) {
-        foreach (self::$options['filters'] as $filter) {
+        foreach ($this->_options['filters'] as $filter) {
             $filter = self::factory($filter);
             if ($filter->validate($var)) {
                 return $filter->filter($var);
@@ -25,7 +26,7 @@ class Pool extends Filter {
     }
 
     public function validate($var) {
-        foreach (self::$options['filters'] as $filter) {
+        foreach ($this->_options['filters'] as $filter) {
             $filter = self::factory($filter);
             if ($filter->validate($var)) {
                 return true;

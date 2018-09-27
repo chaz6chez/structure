@@ -24,15 +24,33 @@ class Struct {
     protected $_scene = '';
 
     /**
+     * @var string Rule内容键
+     * rule content key
+     */
+    protected $_rck = '';
+
+    /**
+     * @var string Rule内容
+     * rule content string
+     */
+    protected $_rcs = '';
+
+    /**
+     * @var array Rule内容配置
+     * rule content options
+     */
+    protected $_rco = [];
+
+    /**
      * Struct constructor.
      * @param null $data
      * @param string $scene
      * @throws \ReflectionException
      */
     public function __construct($data = null, $scene = '') {
-        $this->scalpel();                        # 加载手术刀
+        $this->_scalpel();                       # 加载手术刀
         $this->setScene($scene);                 # 加载场景
-        $this->setDefault();                     # 加载默认值
+        $this->_setDefault();                    # 加载默认值
         if (!is_null($data)) {
             $this->create($data, false); # 创建数据
         }
@@ -66,12 +84,12 @@ class Struct {
      * @throws \ReflectionException
      */
     public function toArray($filterNull = false) {
-        $fields = $this->getFields();
+        $fields = $this->_getFields();
         $_data = [];
         foreach ($fields as $f) {
             $f = $f->getName();
 
-            if ($this->isGhostField($f)) {
+            if ($this->_isGhostField($f)) {
                 continue; # 排除鬼魂字段
             }
 
@@ -83,7 +101,7 @@ class Struct {
                     continue; # 过滤null字段
                 }
 
-                if ($this->isSkipField($f)) {
+                if ($this->_isSkipField($f)) {
                     continue; # 排除skip字段
                 }
             }
@@ -101,7 +119,7 @@ class Struct {
      * @throws \ReflectionException
      */
     public function create(array $data, $validate = true) {
-        $fields = $this->getFields();
+        $fields = $this->_getFields();
         $_data = [];
 
         foreach ($fields as $f) {
@@ -145,14 +163,16 @@ class Struct {
         $passed = true;
 
         foreach ($this->_validate as $f => $v) {
-            if ($this->isSkipField($f) || $this->isGhostField($f)) {
-                continue; # 排除跳过的字段或者魔鬼字段
+            if ($this->_isSkipField($f)) {
+                continue; # 排除skip字段
             }
+
+            # ghost字段需要验证
 
             # 必填值验证
             if (isset($v['required'])) {
                 foreach ($v['required'] as $req) {
-                    if ($this->checkScene($req['scene'])) {
+                    if ($this->_checkScene($req['scene'])) {
                         if (!isset($data[$f]) || $data[$f] === '') {
                             $this->addError($f, $req['error']);
                             $passed = false;
@@ -161,18 +181,27 @@ class Struct {
                     }
                 }
             }
-
             # 规则验证
             if (isset($data[$f]) && $data[$f] !== '' && isset($v['rule'])) {
                 foreach ($v['rule'] as $r) {
-                    if ($this->checkScene($r['scene'])) {
+                    if ($this->_checkScene($r['scene'])) {
                         $validator = $r['content'];
 
-                        if (
-                            (is_string($validator) and call_user_func($validator, $data[$f]) === false) or # 调用函数
-                            (is_array($validator) and call_user_func($validator, $data[$f], $f, $data) === false) or # 调用实例方法
-                            ($validator instanceof Filter and $validator->validate($data[$f]) === false) # 调用验证库
-                        ) {
+                        # 创建错误(校验过程)
+                        $check = true;
+                        switch (true){
+                            case $this->_rck == 'func':
+                                $check = call_user_func($validator, $data[$f]);
+                                break;
+                            case $this->_rck == 'method':
+                                $check = call_user_func($validator, $data[$f], $f, $data);
+                                break;
+                            case $validator instanceof Filter:
+                                $check = $validator->validate($data[$f]);
+                                var_dump($check);exit;
+                                break;
+                        }
+                        if(!$check){
                             $this->addError($f, $r['error']);
                             $passed = false;
                         }
@@ -216,145 +245,164 @@ class Struct {
 
     /**
      * 获取全部错误
-     * @return array|null
+     * @return array
      */
     public function getErrors() {
-        return $this->_errors ? $this->_errors : null;
+        return $this->_errors ? $this->_errors : [];
     }
 
     /**
      * 手术刀
      * 分析验证规则
-     * @throws \ReflectionException
+     *
      */
-    protected function scalpel() {
-        $fields = $this->getFields();
-        foreach ($fields as $f) {
-            # 信息获取阶段
-            $name = $f->getName(); # 字段名称
-            $comment = $f->getDocComment(); # 字段规则注释
-            # 默认正则结果
-            $matches = null;
-            if ($comment) {
-                # 正则筛选指令
-                preg_match_all('/@(default|rule|required|skip|ghost)(?:\[(\w+)\])?\s+?(.+)/', $comment, $matches);
-                $this->_validate[$name] = [];
+    private function _scalpel() {
+        $fields = false;
+        try{
+            $fields = $this->_getFields();
+        }catch (\ReflectionException $e){
+            $this->_errors[0] = $e;
+        }
+        if($fields){
+            foreach ($fields as $f) {
+                # 信息获取阶段
+                $name = $f->getName(); # 字段名称
+                $comment = $f->getDocComment(); # 字段规则注释
+                # 默认正则结果
+                $matches = null;
+                if ($comment) {
+                    # 正则筛选指令
+                    preg_match_all('/@(default|rule|required|skip|ghost)(?:\[(\w+)\])?\s+?(.+)/', $comment, $matches);
+                    $this->_validate[$name] = [];
 
-                # 跳过未有指令的内容
-                if (!$matches) {
-                    continue;
-                }
+                    # 跳过未有指令的内容
+                    if (!$matches) {
+                        continue;
+                    }
 
-                for ($i = 0; $i < count($matches[0]); $i++) {
-                    $rn = trim($matches[1][$i]); # 指令名称
-                    $rs = trim($matches[2][$i]); # 指令场景
-                    $rc = trim($matches[3][$i]); # 规则内容
+                    for ($i = 0; $i < count($matches[0]); $i++) {
+                        $rn = trim($matches[1][$i]); # 指令名称
+                        $rs = trim($matches[2][$i]); # 指令场景
+                        $rc = trim($matches[3][$i]); # 规则内容
 
-                    switch ($rn) {
-                        # 跳过
-                        case 'skip':
-                            if (!isset($this->_validate[$name]['skip'])) {
-                                $this->_validate[$name]['skip'] = [];
-                            }
-                            $this->_validate[$name]['skip'][] = [
-                                'scene' => $rs
-                            ];
-                            break;
-                        # 鬼魂字段
-                        case 'ghost':
-                            if (!isset($this->_validate[$name]['ghost'])) {
-                                $this->_validate[$name]['ghost'] = [];
-                            }
-                            $this->_validate[$name]['ghost'][] = [
-                                'scene' => $rs
-                            ];
-                            break;
-                        # 默认值
-                        case 'default':
-                            $rc = explode(':', $rc, 2);
-                            $t = trim($rc[0]); # 类型:int,float,null,string
-                            $v = isset($rc[1]) ? trim($rc[1]) : null; # 值
-
-                            if (!is_null($v)) {
-                                switch ($t) {
-                                    case 'int':
-                                        $v = intval($v);
-                                        break;
-                                    case 'float':
-                                        $v = floatval($v);
-                                        break;
-                                    case 'null':
-                                        $v = null;
-                                        break;
-                                    case 'func':
-                                        $v = call_user_func($v);
-                                        break;
-                                    case 'method':
-                                        $v = call_user_func_array([$this, $v], []);
-                                        break;
-                                    case 'array':
-                                        $v = json_decode($v, true);
-                                        break;
-                                    case 'bool':
-                                        $v = $v === 'true' ? true : false;
-                                        break;
-                                    default:
-                                        $v = strval($v);
-                                        break;
+                        switch ($rn) {
+                            # 跳过
+                            case 'skip':
+                                if (!isset($this->_validate[$name]['skip'])) {
+                                    $this->_validate[$name]['skip'] = [];
                                 }
-
-                                if (!isset($this->_validate[$name]['default'])) {
-                                    $this->_validate[$name]['default'] = [];
-                                }
-                                $this->_validate[$name]['default'][] = [
-                                    'content' => $v,
+                                $this->_validate[$name]['skip'][] = [
                                     'scene' => $rs
                                 ];
-                            }
+                                break;
+                            # 鬼魂字段
+                            case 'ghost':
+                                if (!isset($this->_validate[$name]['ghost'])) {
+                                    $this->_validate[$name]['ghost'] = [];
+                                }
+                                $this->_validate[$name]['ghost'][] = [
+                                    'scene' => $rs
+                                ];
+                                break;
+                            # 默认值
+                            case 'default':
+                                $rc = explode(':', $rc, 2);
+                                $t = trim($rc[0]); # 类型:int,float,null,string
+                                $v = isset($rc[1]) ? trim($rc[1]) : null; # 值
 
-                            break;
+                                if (!is_null($v)) {
+                                    switch ($t) {
+                                        case 'int':
+                                            $v = intval($v);
+                                            break;
+                                        case 'float':
+                                            $v = floatval($v);
+                                            break;
+                                        case 'null':
+                                            $v = null;
+                                            break;
+                                        case 'func':
+                                            $v = call_user_func($v);
+                                            break;
+                                        case 'method':
+                                            $v = call_user_func_array([$this, $v], []);
+                                            break;
+                                        case 'array':
+                                            $v = json_decode($v, true);
+                                            break;
+                                        case 'bool':
+                                            $v = $v === 'true' ? true : false;
+                                            break;
+                                        default:
+                                            $v = strval($v);
+                                            break;
+                                    }
 
-                        # 规则
-                        case 'rule':
-                            $rc = explode('|', $rc, 2);
+                                    if (!isset($this->_validate[$name]['default'])) {
+                                        $this->_validate[$name]['default'] = [];
+                                    }
+                                    $this->_validate[$name]['default'][] = [
+                                        'content' => $v,
+                                        'scene' => $rs
+                                    ];
+                                }
 
-                            $rc[0] = trim($rc[0]);
-                            $rule = [];
-                            switch (true) {
-                                case substr($rc[0], 0, 4) === 'func': # 调用函数验证,传入当前字段的值
-                                    $rule['content'] = substr($rc[0], 5);
-                                    break;
-                                case substr($rc[0], 0, 6) === 'method': # 调用实例方法验证,传入当字段名称和值
-                                    $rule['content'] = [$this, substr($rc[0], 7)];
-                                    break;
-                                default: # 默认调用验证库
-                                    $rule['content'] = Filter::factory($rc[0]);
-                            }
+                                break;
 
-                            $rule['error'] = isset($rc[1]) ? $rc[1] : "{$name}格式不正确";
-                            $rule['scene'] = $rs;
+                            # 规则
+                            case 'rule':
+                                $rc = explode('|', $rc, 2);
+                                $rc[0] = trim($rc[0]);
 
-                            # 初始化规则部分
-                            if (!isset($this->_validate[$name]['rule'])) {
-                                $this->_validate[$name]['rule'] = [];
-                            }
-                            $this->_validate[$name]['rule'][] = $rule;
+                                $rca = explode(',', $rc[0]);
+                                $this->_rck = trim($rca[0]);
+                                $this->_rcs = trim($rca[1]);
 
-                            break;
+//                            foreach ($rca as $k => $o){
+//                                if($k == 0){
+//                                    continue;
+//                                }
+//                                $o = explode(':', $o, 2);
+//                                $this->_rco[$o[0]] = $o[1];
+//                            }
 
-                        # 必填字段
-                        case 'required':
-                            $rc = explode('|', $rc);
-                            # 初始化规则部分
-                            if (!isset($this->_validate[$name]['required'])) {
-                                $this->_validate[$name]['required'] = [];
-                            }
-                            $this->_validate[$name]['required'][] = [
-                                'content' => true,
-                                'scene' => $rs,
-                                'error' => isset($rc[1]) ? $rc[1] : "{$name}不能为空",
-                            ];
-                            break;
+                                $rule = [];
+                                switch (true) {
+                                    case $this->_rck === 'func': # 调用函数验证,传入当前字段的值
+                                        $rule['content'] = $this->_rcs;
+                                        break;
+                                    case $this->_rck === 'method': # 调用实例方法验证,传入当字段名称和值
+                                        $rule['content'] = [$this, $this->_rcs];
+                                        break;
+                                    default: # 默认调用验证库
+                                        $rule['content'] = Filter::factory($rc[0]);
+                                }
+
+                                $rule['error'] = isset($rc[1]) ? $rc[1] : "{$name}格式不正确";
+                                $rule['scene'] = $rs;
+
+                                # 初始化规则部分
+                                if (!isset($this->_validate[$name]['rule'])) {
+                                    $this->_validate[$name]['rule'] = [];
+                                }
+                                $this->_validate[$name]['rule'][] = $rule;
+
+                                break;
+
+                            # 必填字段
+                            case 'required':
+                                $rc = explode('|', $rc);
+                                # 初始化规则部分
+                                if (!isset($this->_validate[$name]['required'])) {
+                                    $this->_validate[$name]['required'] = [];
+                                }
+                                $this->_validate[$name]['required'][] = [
+                                    'content' => true,
+                                    'scene' => $rs,
+                                    'error' => isset($rc[1]) ? $rc[1] : "{$name}不能为空",
+                                ];
+                                break;
+                        }
                     }
                 }
             }
@@ -366,7 +414,7 @@ class Struct {
      * @return \ReflectionProperty[]
      * @throws \ReflectionException
      */
-    protected function getFields() {
+    private function _getFields() {
         $class = new \ReflectionClass($this);
         return $class->getProperties(\ReflectionProperty::IS_PUBLIC);
     }
@@ -374,12 +422,12 @@ class Struct {
     /**
      * 设置字段默认值
      */
-    protected function setDefault() {
+    private function _setDefault() {
         if ($this->_validate) {
             foreach ($this->_validate as $f => $v) {
                 if (isset($v['default'])) {
                     foreach ($v['default'] as $def) {
-                        if ($this->checkScene($def['scene'])) {
+                        if ($this->_checkScene($def['scene'])) {
                             $this->$f = $def['content'];
                         }
                     }
@@ -393,7 +441,7 @@ class Struct {
      * @param $scene
      * @return bool
      */
-    protected function checkScene($scene) {
+    private function _checkScene($scene) {
         # 如果设置了当前场景,那么当前场景的设置或者未指定场景的指令会被应用
         # 否者,只有未指定场景的指令会被应用
         return $scene == '' || $this->_scene == $scene;
@@ -404,10 +452,10 @@ class Struct {
      * @param $field
      * @return bool
      */
-    protected function isGhostField($field) {
+    private function _isGhostField($field) {
         if (isset($this->_validate[$field]['ghost'])) {
             foreach ($this->_validate[$field]['ghost'] as $v) {
-                if ($this->checkScene($v['scene'])) {
+                if ($this->_checkScene($v['scene'])) {
                     return true;
                 }
             }
@@ -420,10 +468,10 @@ class Struct {
      * @param $field
      * @return bool
      */
-    protected function isSkipField($field) {
+    private function _isSkipField($field) {
         if (isset($this->_validate[$field]['skip'])) {
             foreach ($this->_validate[$field]['skip'] as $v) {
-                if ($this->checkScene($v['scene'])) {
+                if ($this->_checkScene($v['scene'])) {
                     return true;
                 }
             }
