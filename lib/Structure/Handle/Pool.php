@@ -9,7 +9,8 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Pool extends Filter {
-    
+
+    protected $_filterName = 'pool 过滤器';
     protected $_defaultOptions = [
         'filters' => [],
     ];

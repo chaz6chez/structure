@@ -9,7 +9,8 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class IP extends Filter {
-    
+
+    protected $_filterName = 'ip 过滤器';
     protected $_defaultOptions = [
         'ipv4' => true,
         'ipv6' => true,

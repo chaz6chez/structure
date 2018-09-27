@@ -11,7 +11,8 @@ use Structure\Filter;
 defined('PHP_INT_MIN') or define('PHP_INT_MIN', ~PHP_INT_MAX);
 
 class Ints extends Filter {
-    
+
+    protected $_filterName = 'int 过滤器';
     protected $_defaultOptions = [
         'min' => PHP_INT_MIN,
         'max' => PHP_INT_MAX,

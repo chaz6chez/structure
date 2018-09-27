@@ -10,6 +10,7 @@ use Structure\Filter;
 
 class Arrays extends Filter {
 
+    protected $_filterName = 'array 过滤器';
     protected $_defaultOptions = [
         'min' => 0,
         'max' => PHP_INT_MAX,

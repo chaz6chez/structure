@@ -17,18 +17,22 @@ class Go{
      */
     public function to(){
         $a = \Test\Check::factory([
-            'a' => '12344',
+            'a' => '',
             'b' => '1',
         ]);
+//        $a = \Example\User::factory([
+//            'a' => '1234',
+//            'b' => '1',
+//        ]);
         $a->validate();
-        return $a;
+        if($a->hasError()){
+            dump($a->getError());
+        }
+        print_r($a->toArray(TRUE));
+
     }
-    public function test(){
-        $e = new \InvalidArgumentException('Invalid Filter Specified: ',2);
-        return $e->getMessage();
-    }
+
 }
 
 $a = new Go();
-//print_r($a->test());
 print_r($a->to());

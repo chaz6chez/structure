@@ -9,7 +9,7 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Booleans extends Filter {
-    
+    protected $_filterName = 'bool 过滤器';
     protected $_defaultOptions = [
         'default' => null,
     ];

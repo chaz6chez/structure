@@ -9,7 +9,8 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class URL extends Filter {
-    
+
+    protected $_filterName = 'url 过滤器';
     protected $_defaultOptions = [
         'path' => false,
         'query' => false,

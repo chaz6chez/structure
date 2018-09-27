@@ -7,7 +7,8 @@
 namespace Structure\Handle;
 
 class Regex extends Strings {
-    
+
+    protected $_filterName = '正则 过滤器';
     protected $_defaultOptions = array(
         'min' => 0,
         'max' => PHP_INT_MAX,

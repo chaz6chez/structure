@@ -9,7 +9,8 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Floats extends Filter {
-    
+
+    protected $_filterName = 'float 过滤器';
     protected $_defaultOptions = [
         'min' => null,
         'max' => null,

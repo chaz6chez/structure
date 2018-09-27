@@ -9,7 +9,8 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Object extends Filter {
-    
+
+    protected $_filterName = 'obj 过滤器';
     protected $_defaultOptions = [
         'class' => '',
     ];

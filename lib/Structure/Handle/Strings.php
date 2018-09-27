@@ -11,11 +11,6 @@ use Structure\Filter;
 class Strings extends Filter {
 
     protected $_filterName = 'string 过滤器';
-
-    /**
-     * 默认配置
-     * @var array
-     */
     protected $_defaultOptions = [
         'min' => 0,
         'max' => PHP_INT_MAX,
@@ -42,15 +37,10 @@ class Strings extends Filter {
         return $var;
     }
 
-    /**
-     * 验证器实现
-     * @param $var
-     * @return string
-     */
     public function validate($var){
         if (is_object($var) && method_exists($var, '__toString')) {
             $var = (string) $var;
         }
-        return $var;
+        return parent::validate($var);
     }
 }

@@ -9,7 +9,8 @@ namespace Structure\Handle;
 use Structure\Filter;
 
 class Map extends Filter {
-    
+
+    protected $_filterName = 'map 过滤器';
     protected $_defaultOptions = [
         'filters' => [],
     ];

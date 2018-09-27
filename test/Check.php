@@ -11,13 +11,14 @@ use Structure\Struct;
 class Check extends Struct {
     /**
      * @var
-     * @rule string,max:3,min:1|我操a
+     * @required true|这是a
+     * @ghost
      */
     public $a;
 
     /**
      * @var
-     * @rule int,max:2|我操b
+     * @required true|这是b
      */
     public $b;
 }

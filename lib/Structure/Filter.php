@@ -19,10 +19,11 @@ abstract class Filter {
         'ip'     => 'Structure\Handle\IP',
         'object' => 'Structure\Handle\Object',
         'string' => 'Structure\Handle\Strings',
-        'pool'   => 'Structure\Handle\Pool',
+        'pool'   => 'Structure\Handle\Pool',    # 未完善
         'map'    => 'Structure\Handle\Map',
         'url'    => 'Structure\Handle\URL',
         'regex'  => 'Structure\Handle\Regex',
+        'chain'  => 'Structure\Handle\Chain',   # 未完善
     ];
 
     protected $_filterName = '';
