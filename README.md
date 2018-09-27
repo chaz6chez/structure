@@ -9,6 +9,7 @@
                 验证方式      ↓
                            提示语
 ````
+***
 ## 标签
 ````
 /**
@@ -19,6 +20,21 @@
  * @rule string,min:10,max:20|XXXX ->  验证规则,使用filter库/使用方法/使用实例验证规则
  */
 ````
+***
+## 方法
+
+| 方法名 | 参数 | 说明 |
+| :---: | :---: | :---| 
+|   factory($data,$scene)| data:数据(可选) scene:场景(可选) | 实例化方法 |
+|   setScene($scene)| scene:场景 | 设置场景，在验证方法之前调用有效 |
+|   toArray($filterNull)| filterNull:是否过滤空值(可选) | 数据以数组形式输出 |
+|   create($data,$validate)| data:数据 validate:是否执行验证(可选) | 输入数据 |
+|   validate($data)| data:数据(可选) | 验证器方法 |
+|   hasError($filed)| filed:条件(可选) | 错误确认，返回布尔 |
+|   getError()| 无 | 获取第一条错误信息 |
+|   getErrors()| 无 | 以数组形式获取所有错误信息 |
+ 
+***
 ## 例子
 ````    
         // function start
@@ -36,6 +52,7 @@
         
         // function end
 ````
+***
 ## 说明
 
 ````

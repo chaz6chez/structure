@@ -174,7 +174,7 @@ class Struct {
                 foreach ($v['required'] as $req) {
                     if ($this->_checkScene($req['scene'])) {
                         if (!isset($data[$f]) || $data[$f] === '') {
-                            $this->addError($f, $req['error']);
+                            $this->_addError($f, $req['error']);
                             $passed = false;
                             continue 2; # 无值不验证
                         }
@@ -202,7 +202,7 @@ class Struct {
                                 break;
                         }
                         if(!$check){
-                            $this->addError($f, $r['error']);
+                            $this->_addError($f, $r['error']);
                             $passed = false;
                         }
                     }
@@ -211,15 +211,6 @@ class Struct {
         }
 
         return $passed;
-    }
-
-    /**
-     * 添加错误
-     * @param string $field
-     * @param string $error
-     */
-    public function addError($field, $error) {
-        $this->_errors[$field] = $error;
     }
 
     /**
@@ -477,6 +468,15 @@ class Struct {
             }
         }
         return false;
+    }
+
+    /**
+     * 添加错误
+     * @param string $field
+     * @param string $error
+     */
+    private function _addError($field, $error) {
+        $this->_errors[$field] = $error;
     }
 
 }
