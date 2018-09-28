@@ -5,6 +5,7 @@
 
 ## 解析
 ````
+ @rule[check] string,min:1|XXXXXX
  @rule[login] func:_check|XXXXXX
     ↓     ↓        ↓         ↓
  验证规则  ↓        ↓         ↓
@@ -28,32 +29,47 @@
 
 | 方法名 | 参数 | 说明 |
 | :---: | :---: | :---| 
-|   factory($data,$scene)| data:数据(可选) scene:场景(可选) | 实例化方法 |
-|   setScene($scene)| scene:场景 | 设置场景，在验证方法之前调用有效 |
+|   factory($data,$scene)| data:数据(可选) scene:场景(可选) | 实例化方法,可加载数据和场景 |
+|   setScene($scene)| scene:场景 | 设置场景,在验证方法之前调用有效 |
 |   toArray($filterNull)| filterNull:是否过滤空值(可选) | 数据以数组形式输出 |
-|   create($data,$validate)| data:数据 validate:是否执行验证(可选) | 输入数据 |
-|   validate($data)| data:数据(可选) | 验证器方法 |
+|   create($data,$validate)| data:数据 validate:是否执行验证(可选) | 输入数据,可执行验证 |
+|   validate($data)| data:数据(可选) | 验证器方法,可加载数据 |
 |   hasError($filed)| filed:条件(可选) | 错误确认，返回布尔 |
 |   getError()| 无 | 获取第一条错误信息 |
 |   getErrors()| 无 | 以数组形式获取所有错误信息 |
  
 ***
 ## 例子
+- 方式一
 ````    
-        // function start
-        
         $data = [
             'a' => '',
             'b' => '1',
         ];
-        $structure = \Test\Check::factory($data);
-        $structure->validate();
+        
+        $structure = \Test\Check::factory();
+        $structure->setScene('login');
+        $structure->create($data,true);
         if($structure->hasError()){
             $this->response->error($structure->getError());
         }
         $this->response->success($structure->toArray());
-        
-        // function end
+
+````
+- 方式二
+````    
+        // 与方式一数据内容相同
+        $structure = \Test\Check::factory($data,'login');
+        $structure->validate();
+        // 与方式一判断相同
+````
+- 方式三
+````    
+        // 与方式一数据内容相同
+        $structure = \Test\Check::factory();
+        $structure->setScene('login');
+        $structure->validate($data);
+        // 与方式一判断相同
 ````
 ***
 ## 说明
