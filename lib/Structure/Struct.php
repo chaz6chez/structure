@@ -19,6 +19,11 @@ class Struct {
     protected $_errors = [];
 
     /**
+     * @var array 错误码
+     */
+    protected $_codes = [];
+
+    /**
      * @var string 当前场景
      */
     protected $_scene = '';
@@ -198,7 +203,6 @@ class Struct {
                                 break;
                             case $validator instanceof Filter:
                                 $check = $validator->validate($data[$f]);
-                                var_dump($check);exit;
                                 break;
                         }
                         if(!$check){
@@ -235,11 +239,27 @@ class Struct {
     }
 
     /**
+     * 获取第一条错误码
+     * @return string|null
+     */
+    public function getCode() {
+        return $this->_codes ? array_values($this->_codes)[0] : null;
+    }
+
+    /**
      * 获取全部错误
      * @return array
      */
     public function getErrors() {
         return $this->_errors ? $this->_errors : [];
+    }
+
+    /**
+     * 获取全部错误码
+     * @return array
+     */
+    public function getCodes() {
+        return $this->_codes ? $this->_codes : [];
     }
 
     /**
@@ -476,7 +496,9 @@ class Struct {
      * @param string $error
      */
     private function _addError($field, $error) {
-        $this->_errors[$field] = $error;
+        $error = explode(':',$error);
+        $this->_errors[$field] = $error[0];
+        $this->_codes[$field] = isset($error[1]) ? $error[1] : '500';
     }
 
 }

@@ -1,25 +1,28 @@
 # structure
 
-#############################
 
 一个没什么用的验证器
 ***
 
 ## 解析
 ````
- @rule[check] string,min:1|XXXXXX
- @rule[login] func:_check|XXXXXX
-    ↓     ↓        ↓         ↓
- 验证规则  ↓        ↓         ↓
-       执行场景     ↓         ↓
-                验证方式      ↓
-                           提示语
+ @验证方式[场景] 验证方式|错误提示语:错误码
+       ↓           ↓         ↓     ↓
+ @rule[check] string,min:1|XXXXXX:500                              
 ````
 ***
 ## 标签
+| 标签名 | 方式 | 说明|
+| :---: | :---:| :--- |
+| @default | 类型、func、method | func与method是将返回值默认赋予该标签 |
+| @required| true | 判断是否为必要值 |
+| @rule | 类型、func、method | 以func与method的bool返回类型判断验证 |
+| @skip | 无 | 跳过验证 |
+| @ghost| 无 | 跳过输出 |
+
 ````
 /**
- * @default num:7                  ->  若空值则默认为num类型7
+ * @default num:7                  ->  若空值则默认为num类型7 
  * @required true|XXXXX            ->  该值为空时,提示XXXXX
  * @skip                           ->  跳过验证(不执行该字段所有限制条件,toArray()默认输出，toArray(true)时过滤)
  * @ghost                          ->  跳过输出(执行限制条件,toArray输出过滤该字段)
@@ -39,6 +42,8 @@
 |   hasError($filed)| filed:条件(可选) | 错误确认，返回布尔 |
 |   getError()| 无 | 获取第一条错误信息 |
 |   getErrors()| 无 | 以数组形式获取所有错误信息 |
+|   getCode()| 无 | 获取第一条错误码 |
+|   getCodes()| 无 | 以数组形式获取所有错误码 |
  
 ***
 ## 例子
@@ -80,6 +85,6 @@
 # 1.所有验证标签均可使用[XXX]场景化区分.
 # 2.filter库可修改库类文件提供默认验证规则.
 # 3.修改Handle下类库文件的_defaultOptions数据,可以更改默认规则.
-# 4.default标签可使用func和method,与rule区别是,
+# 4.default标签可使用func和method,与rule区别是:
 # rule使用其返回true or false来进行判断,default直接使用其返回值.
 ````
