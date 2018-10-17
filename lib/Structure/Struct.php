@@ -366,6 +366,9 @@ class Struct {
                                 $rc[0] = trim($rc[0]);
 
                                 $rca = explode(',', $rc[0]);
+                                if(count($rca) < 2){
+                                    $rca = explode(':',$rc[0]);
+                                }
                                 $this->_rck = trim($rca[0]);
                                 $this->_rcs = trim($rca[1]);
 
