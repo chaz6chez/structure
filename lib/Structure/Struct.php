@@ -121,7 +121,6 @@ class Struct {
      * @param array $data
      * @param bool $validate
      * @return bool
-     * @throws \ReflectionException
      */
     public function create(array $data, $validate = true) {
         $fields = $this->_getFields();
