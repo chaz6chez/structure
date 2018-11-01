@@ -145,6 +145,19 @@ class Struct {
 
         return true;
     }
+    
+    /**
+     * 清空
+     * @return bool
+     */
+    public function clean(){
+        $fields = $this->_getFields();
+        foreach ($fields as $f) {
+            $f = $f->getName();
+            $this->$f = '';
+        }
+        return true;
+    }
 
     /**
      * 验证器
