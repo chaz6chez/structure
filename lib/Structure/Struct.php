@@ -154,7 +154,7 @@ class Struct {
         $fields = $this->_getFields();
         foreach ($fields as $f) {
             $f = $f->getName();
-            $this->$f = '';
+            $this->$f = null;
         }
         return true;
     }
