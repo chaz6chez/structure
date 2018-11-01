@@ -128,7 +128,7 @@ class Struct {
 
         foreach ($fields as $f) {
             $f = $f->getName();
-            $_data[$f] = (isset($data[$f]) and $data[$f] != '') ? $data[$f] : $this->$f;
+            $_data[$f] = (isset($data[$f]) and $data[$f] !== '') ? $data[$f] : $this->$f;
         }
 
         # 赋值
