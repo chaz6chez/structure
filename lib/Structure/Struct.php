@@ -86,7 +86,6 @@ class Struct {
      * 返回数组格式的数据
      * @param bool $filterNull 过滤NULL的开关 默认不过滤
      * @return array
-     * @throws \ReflectionException
      */
     public function toArray($filterNull = false) {
         $fields = $this->_getFields();
@@ -163,7 +162,6 @@ class Struct {
      * 验证器
      * @param array|null $data
      * @return bool
-     * @throws \ReflectionException
      */
     public function validate(array $data = null) {
         # 初始化错误记录
