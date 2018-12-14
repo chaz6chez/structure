@@ -131,6 +131,43 @@ class Struct {
     }
 
     /**
+     * 较严格的返回数组数据 (默认过滤空字符串)
+     * @param bool $filterNull
+     * @return array
+     */
+    public function toArrayStrict($filterNull = false){
+        $fields = $this->_getFields();
+        $_data = [];
+        foreach ($fields as $f) {
+            $f = $f->getName();
+
+            if ($this->_isGhostField($f)) {
+                continue; # 排除鬼魂字段
+            }
+            if(!is_array($this->$f)){
+                if ($this->$f === '') {
+                    continue; # 过滤空字符串
+                }
+                if ($filterNull){
+                    if ('null' == strtolower($this->$f)) {
+                        continue; # 过滤字符串null字段
+                    }
+                    if (is_null($this->$f)) {
+                        continue; # 过滤null字段
+                    }
+                    if ($this->_isSkipField($f)) {
+                        continue; # 排除skip字段
+                    }
+                }
+            }
+            
+            $_data[$f] = $this->$f;
+        }
+
+        return $_data;
+    }
+
+    /**
      * 批量赋值字段
      * @param array $data
      * @param bool $validate
