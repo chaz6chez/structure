@@ -397,8 +397,8 @@ class Struct {
                                 if(count($rca) < 2){
                                     $rca = explode(':',$rc[0]);
                                 }
-                                $this->_rck = trim($rca[0]);
-                                $this->_rcs = trim($rca[1]);
+                                $this->_rck = isset($rca[0]) ? trim($rca[0]) : '';
+                                $this->_rcs = isset($rca[1]) ? trim($rca[1]) : '';
 
 //                            foreach ($rca as $k => $o){
 //                                if($k == 0){
