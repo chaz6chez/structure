@@ -9,6 +9,13 @@ namespace Structure;
 class Struct {
 
     /**
+     * 子类继承重写
+     *
+     * @var bool 是否将空字符串转换成null
+     */
+    protected $_empty_to_null = true;
+
+    /**
      * @var array 验证信息
      */
     protected $_validate = [];
@@ -59,6 +66,14 @@ class Struct {
         if (!is_null($data)) {
             $this->create($data, false); # 创建数据
         }
+    }
+
+    /**
+     * 设置empty to null
+     * @param bool $bool
+     */
+    public function emptyToNull(bool $bool){
+        $this->_empty_to_null = $bool;
     }
 
     /**
@@ -124,10 +139,13 @@ class Struct {
     public function create(array $data, $validate = true) {
         $fields = $this->_getFields();
         $_data = [];
-
         foreach ($fields as $f) {
             $f = $f->getName();
-            $_data[$f] = (isset($data[$f]) and $data[$f] !== '') ? $data[$f] : $this->$f;
+            if($this->_empty_to_null){
+                $_data[$f] = (isset($data[$f]) and $data[$f] !== '') ? $data[$f] : $this->$f;
+            }else{
+                $_data[$f] = isset($data[$f]) ? $data[$f] : $this->$f;
+            }
         }
 
         # 赋值
@@ -379,8 +397,8 @@ class Struct {
                                 if(count($rca) < 2){
                                     $rca = explode(':',$rc[0]);
                                 }
-                                $this->_rck = isset($rca[0]) ? trim($rca[0]) : '';
-                                $this->_rcs = isset($rca[1]) ? trim($rca[1]) : '';
+                                $this->_rck = trim($rca[0]);
+                                $this->_rcs = trim($rca[1]);
 
 //                            foreach ($rca as $k => $o){
 //                                if($k == 0){
