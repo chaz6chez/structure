@@ -124,7 +124,11 @@ class Struct {
                     continue; # 排除skip字段
                 }
             }
-            $_data[$f] = $this->$f;
+            if($this->_empty_to_null){
+                $_data[$f] = $this->$f;
+            }else{
+                $_data[$f] = ($this->$f === null) ? '' : $this->$f;
+            }
         }
 
         return $_data;
