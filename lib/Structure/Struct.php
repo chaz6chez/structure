@@ -100,9 +100,10 @@ class Struct {
     /**
      * 返回数组格式的数据
      * @param bool $filterNull 过滤NULL的开关 默认不过滤
+     * @param bool $nullToEmpty NULL转换空字符串 默认不转换
      * @return array
      */
-    public function toArray($filterNull = false) {
+    public function toArray($filterNull = false,$nullToEmpty = false) {
         $fields = $this->_getFields();
         $_data = [];
         foreach ($fields as $f) {
@@ -125,7 +126,7 @@ class Struct {
                 }
             }
             if($this->_empty_to_null){
-                $_data[$f] = $this->$f;
+                $_data[$f] = $nullToEmpty ? '' : $this->$f;
             }else{
                 $_data[$f] = ($this->$f === null) ? '' : $this->$f;
             }
@@ -133,7 +134,7 @@ class Struct {
 
         return $_data;
     }
-
+    
     /**
      * 较严格的返回数组数据 (默认过滤空字符串)
      * @param bool $filterNull
