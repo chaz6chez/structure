@@ -126,7 +126,7 @@ class Struct {
                 }
             }
             if($this->_empty_to_null){
-                $_data[$f] = $nullToEmpty ? '' : $this->$f;
+                $_data[$f] = ($nullToEmpty and $this->$f === null) ? '' : $this->$f;
             }else{
                 $_data[$f] = ($this->$f === null) ? '' : $this->$f;
             }
