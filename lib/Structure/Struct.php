@@ -69,6 +69,19 @@ class Struct {
     }
 
     /**
+     * @param $var
+     * @param Struct $struct
+     * @return false|int|string
+     */
+    public function getVariableName(&$var,Struct $struct){
+        $tmp = $var;
+        $var = 'tmp_value_'.mt_rand();
+        $name = array_search($var, $struct->toArray());
+        $var = $tmp;
+        return $name;
+    }
+
+    /**
      * 设置empty to null
      * @param bool $bool
      */
@@ -134,7 +147,7 @@ class Struct {
 
         return $_data;
     }
-    
+
     /**
      * 较严格的返回数组数据 (默认过滤空字符串)
      * @param bool $filterNull
@@ -165,7 +178,7 @@ class Struct {
                     }
                 }
             }
-            
+
             $_data[$f] = $this->$f;
         }
 
