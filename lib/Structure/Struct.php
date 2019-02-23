@@ -7,7 +7,10 @@
 namespace Structure;
 
 class Struct {
-
+    const OPERATER_CLOASE        = 0; # 默认关闭
+    const OPERATER_LOAD_OUTPUT   = 1; # 装载输出
+    const OPERATER_FILTER_OUTPUT = 2; # 过滤输出
+# ------------------- set start ----------------
     /**
      * 子类继承重写
      *
@@ -15,6 +18,11 @@ class Struct {
      */
     protected $_empty_to_null = true;
 
+    /**
+     * @var int 特殊值的处理
+     */
+    protected $_operater = self::OPERATER_CLOASE;
+# -------------------- set end ------------------
     /**
      * @var array 验证信息
      */
@@ -84,9 +92,26 @@ class Struct {
     /**
      * 设置empty to null
      * @param bool $bool
+     * @return $this
      */
     public function emptyToNull(bool $bool){
         $this->_empty_to_null = $bool;
+        return $this;
+    }
+
+    /**
+     * 设置过滤类型
+     * @param int $operater
+     * @return $this
+     */
+    public function setOperater(int $operater){
+        $this->_operater = $operater;
+        return $this;
+    }
+    
+    public function cleanSet(){
+        $this->_empty_to_null = true;
+        $this->_operater = self::OPERATER_CLOASE;
     }
 
     /**
@@ -139,12 +164,37 @@ class Struct {
                 }
             }
             if($this->_empty_to_null){
-                $_data[$f] = ($nullToEmpty and $this->$f === null) ? '' : $this->$f;
+                $value = ($nullToEmpty and $this->$f === null) ? '' : $this->$f;
             }else{
-                $_data[$f] = ($this->$f === null) ? '' : $this->$f;
+                $value = ($this->$f === null) ? '' : $this->$f;
+            }
+
+            switch ($this->_operater){
+                case self::OPERATER_LOAD_OUTPUT:
+                    $match = $this->_operatorPreg($value);
+                    if(isset($match['operator'])){
+                        $_data["{$f}[{$match['operator']}]"] = $match['column'];
+                    }else{
+                        $_data[$f] = $value;
+                    }
+                    break;
+
+                case self::OPERATER_FILTER_OUTPUT:
+                    $match = $this->_operatorPreg($value);
+                    if(isset($match['operator'])){
+                        $_data[$f] = $match['column'];
+                    }else{
+                        $_data[$f] = $value;
+                    }
+                    break;
+
+                case self::OPERATER_CLOASE:
+                default:
+                    $_data[$f] = $value;
+                    break;
             }
         }
-
+        $this->cleanSet();
         return $_data;
     }
 
@@ -179,54 +229,34 @@ class Struct {
                 }
             }
 
-            $_data[$f] = $this->$f;
-        }
+            $value = $this->$f;
 
-        return $_data;
-    }
+            switch ($this->_operater){
+                case self::OPERATER_LOAD_OUTPUT:
+                    $match = $this->_operatorPreg($value);
+                    if(isset($match['operator'])){
+                        $_data["{$f}[{$match['operator']}]"] = $match['column'];
+                    }else{
+                        $_data[$f] = $value;
+                    }
+                    break;
 
-    /**
-     * 解析特殊内容的输出数组
-     * @param bool $filterNull
-     * @param bool $nullToEmpty
-     * @return array
-     */
-    public function toArraySpecial($filterNull = false,$nullToEmpty = false){
-        $fields = $this->_getFields();
-        $_data = [];
-        foreach ($fields as $f) {
-            $f = $f->getName();
+                case self::OPERATER_FILTER_OUTPUT:
+                    $match = $this->_operatorPreg($value);
+                    if(isset($match['operator'])){
+                        $_data[$f] = $match['column'];
+                    }else{
+                        $_data[$f] = $value;
+                    }
+                    break;
 
-            if ($this->_isGhostField($f)) {
-                continue; # 排除鬼魂字段
-            }
-
-            if ($filterNull && !is_array($this->$f)) {
-                if ('null' == strtolower($this->$f)) {
-                    continue; # 过滤null字段
-                }
-                if (is_null($this->$f)) {
-                    continue; # 过滤null字段
-                }
-
-                if ($this->_isSkipField($f)) {
-                    continue; # 排除skip字段
-                }
-            }
-            if($this->_empty_to_null){
-                $value = ($nullToEmpty and $this->$f === null) ? '' : $this->$f;
-            }else{
-                $value = ($this->$f === null) ? '' : $this->$f;
-            }
-
-            preg_match('/(?<column>[a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i', $value, $match);
-            if(isset($match['operator'])){
-                $_data["{$f}[{$match['operator']}]"] = $match['column'];
-            }else{
-                $_data[$f] = $value;
+                case self::OPERATER_CLOASE:
+                default:
+                    $_data[$f] = $value;
+                    break;
             }
         }
-
+        $this->cleanSet();
         return $_data;
     }
 
@@ -549,6 +579,16 @@ class Struct {
                 }
             }
         }
+    }
+
+    /**
+     * 过滤正则辅助
+     * @param $value
+     * @return mixed
+     */
+    protected function _operatorPreg($value){
+        preg_match('/(?<column>[a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i', $value, $match);
+        return $match;
     }
 
     /**
