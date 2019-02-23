@@ -186,6 +186,51 @@ class Struct {
     }
 
     /**
+     * 解析特殊内容的输出数组
+     * @param bool $filterNull
+     * @param bool $nullToEmpty
+     * @return array
+     */
+    public function toArraySpecial($filterNull = false,$nullToEmpty = false){
+        $fields = $this->_getFields();
+        $_data = [];
+        foreach ($fields as $f) {
+            $f = $f->getName();
+
+            if ($this->_isGhostField($f)) {
+                continue; # 排除鬼魂字段
+            }
+
+            if ($filterNull && !is_array($this->$f)) {
+                if ('null' == strtolower($this->$f)) {
+                    continue; # 过滤null字段
+                }
+                if (is_null($this->$f)) {
+                    continue; # 过滤null字段
+                }
+
+                if ($this->_isSkipField($f)) {
+                    continue; # 排除skip字段
+                }
+            }
+            if($this->_empty_to_null){
+                $value = ($nullToEmpty and $this->$f === null) ? '' : $this->$f;
+            }else{
+                $value = ($this->$f === null) ? '' : $this->$f;
+            }
+
+            preg_match('/(?<column>[a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i', $value, $match);
+            if(isset($match['operator'])){
+                $_data["{$f}[{$match['operator']}]"] = $match['column'];
+            }else{
+                $_data[$f] = $value;
+            }
+        }
+
+        return $_data;
+    }
+
+    /**
      * 批量赋值字段
      * @param array $data
      * @param bool $validate
