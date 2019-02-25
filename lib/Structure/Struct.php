@@ -234,15 +234,16 @@ class Struct {
     /**
      * 数组输出 [仅输出@key]
      * @param bool $filterNull
+     * @param string $scene 场景
      * @return array
      */
-    public function toArrayKey($filterNull = false,$checkScene = false){
+    public function toArrayKey($filterNull = false,$scene = ''){
         $fields = $this->_getFields();
         $_data = [];
 
         foreach ($fields as $f) {
             $f = $f->getName();
-            if (!$this->_isKeyField($f,$checkScene)) {
+            if (!$this->_isKeyField($f,$scene)) {
                 continue; # 排除非key字段
             }
 
@@ -689,13 +690,14 @@ class Struct {
     /**
      * 是否为key的字段
      * @param $field
+     * @param string $scene
      * @return bool
      */
-    private function _isKeyField($field,$scene = false) {
+    private function _isKeyField($field,$scene = '') {
         if (isset($this->_validate[$field]['key'])) {
             if($scene){
                 foreach ($this->_validate[$field]['key'] as $v) {
-                    if ($this->_checkScene($v['scene'])) {
+                    if ($v['sence'] == $scene) {
                         return true;
                     }
                 }
