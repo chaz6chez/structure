@@ -7,9 +7,22 @@
 namespace Structure;
 
 class Struct {
+    # 数值过滤
     const OPERATER_CLOASE        = 0; # 默认关闭
     const OPERATER_LOAD_OUTPUT   = 1; # 装载输出
     const OPERATER_FILTER_OUTPUT = 2; # 过滤输出
+    # 参数过滤 []
+    const FILTER_NORMAL = 0; # 默认不过滤
+    const FILTER_NULL   = 1; # 过滤NULL
+    const FILTER_EMPTY  = 2; # 过滤空字符串
+    const FILTER_STRICT = 3; # 严格过滤
+    const FILTER_KEY    = 4; # 仅输出KEY字段
+    # 输出转换
+    const OUTPUT_NORMAL = 0; # 默认输出
+    const OUTPUT_NULL   = 1; # 空字符串转NULL
+    const OUTPUT_EMPTY  = 2; # NULL转空字符串
+    const OUTPUT_KEY    = 3; # 仅输出KEY字段
+
 # ------------------- set start ----------------
     /**
      * 子类继承重写
@@ -169,9 +182,6 @@ class Struct {
             }
 
             if ($filterNull && !is_array($this->$f)) {
-                if ('null' == strtolower($this->$f)) {
-                    continue; # 过滤null字段
-                }
                 if (is_null($this->$f)) {
                     continue; # 过滤null字段
                 }
@@ -212,9 +222,6 @@ class Struct {
                     continue; # 过滤空字符串
                 }
                 if ($filterNull){
-                    if ('null' == strtolower($this->$f)) {
-                        continue; # 过滤字符串null字段
-                    }
                     if (is_null($this->$f)) {
                         continue; # 过滤null字段
                     }
@@ -237,7 +244,7 @@ class Struct {
      * @param string $scene 场景
      * @return array
      */
-    public function toArrayKey($filterNull = false,$scene = ''){
+    public function outputArrayByKey($filterNull = false,$scene = ''){
         $fields = $this->_getFields();
         $_data = [];
 
@@ -249,15 +256,87 @@ class Struct {
 
             if(!is_array($this->$f)){
                 if ($filterNull){
-                    if ('null' == strtolower($this->$f)) {
-                        continue; # 过滤字符串null字段
-                    }
                     if (is_null($this->$f)) {
                         continue; # 过滤null字段
                     }
                 }
             }
             $res = $this->_parsingOperator($f,$this->$f);
+            $_data[$res[0]] = $res[1];
+        }
+        $this->cleanSet();
+        return $_data;
+    }
+
+    /**
+     * 数组输出 [新版]
+     * @param int $filter
+     * @param int $output
+     * @return array
+     */
+    public function outputArray($filter = self::FILTER_NORMAL,$output = self::OUTPUT_NORMAL,$secen = ''){
+        $fields = $this->_getFields();
+        $_data = [];
+        foreach ($fields as $f) {
+            $f = $f->getName();
+
+            if ($this->_isGhostField($f)) {
+                continue; # 排除鬼魂字段
+            }
+
+            if (!is_array($this->$f)){
+                switch ($filter){
+                    case self::FILTER_KEY:
+                        if (
+                            !$this->_isKeyField($this->$f,$secen)
+                        ) {
+                            continue;
+                        }
+                        break;
+                    case self::FILTER_STRICT:
+                        if (
+                            is_null($this->$f) or
+                            $this->$f == '' or
+                            $this->_isSkipField($f)
+                        ) {
+                            continue;
+                        }
+                        break;
+                    case self::FILTER_NULL:
+                        if (
+                            is_null($this->$f) or
+                            $this->_isSkipField($f)
+                        ) {
+                            continue;
+                        }
+                        break;
+                    case self::FILTER_EMPTY:
+                        if (
+                            $this->$f == '' or
+                            $this->_isSkipField($f)
+                        ) {
+                            continue;
+                        }
+                        break;
+                    case self::FILTER_NORMAL:
+                    default:
+                        break;
+                }
+            }
+            switch ($output){
+                case self::OUTPUT_NULL:
+                    $value = $this->$f === '' ? null : $this->$f;
+                    break;
+                case self::OUTPUT_EMPTY:
+                    $value = is_null($this->$f) ? '' : $this->$f;
+                    break;
+                case self::OUTPUT_NORMAL:
+                default:
+                    $value = $this->$f;
+                    break;
+            }
+
+            $res = $this->_parsingOperator($f,$value);
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -593,27 +672,30 @@ class Struct {
      * value = array[1]
      */
     private function _parsingOperator($key,$value){
-        switch ($this->_operator){
-            case self::OPERATER_LOAD_OUTPUT:
-                $match = $this->_operatorPreg($value);
-                if(isset($match['operator'])){
-                    $key = "{$key}[{$match['operator']}]";
-                    $value = $match['column'];
-                }
-                break;
+        if($value){
+            switch ($this->_operator){
+                case self::OPERATER_LOAD_OUTPUT:
+                    $match = $this->_operatorPreg($value);
+                    if(isset($match['operator'])){
+                        $key = "{$key}[{$match['operator']}]";
+                        $value = $match['column'];
+                    }
+                    break;
 
-            case self::OPERATER_FILTER_OUTPUT:
-                $match = $this->_operatorPreg($value);
-                if(isset($match['operator'])){
-                    $value = $match['column'];
-                }
-                break;
+                case self::OPERATER_FILTER_OUTPUT:
+                    $match = $this->_operatorPreg($value);
+                    if(isset($match['operator'])){
+                        $value = $match['column'];
+                    }
+                    break;
 
-            case self::OPERATER_CLOASE:
-            default:
+                case self::OPERATER_CLOASE:
+                default:
 
-                break;
+                    break;
+            }
         }
+
         return [$key,$value];
     }
 
