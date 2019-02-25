@@ -290,7 +290,7 @@ class Struct {
                         if (
                             !$this->_isKeyField($this->$f,$secen)
                         ) {
-                            continue;
+                            continue 2;
                         }
                         break;
                     case self::FILTER_STRICT:
@@ -299,7 +299,7 @@ class Struct {
                             $this->$f == '' or
                             $this->_isSkipField($f)
                         ) {
-                            continue;
+                            continue 2;
                         }
                         break;
                     case self::FILTER_NULL:
@@ -307,7 +307,7 @@ class Struct {
                             is_null($this->$f) or
                             $this->_isSkipField($f)
                         ) {
-                            continue;
+                            continue 2;
                         }
                         break;
                     case self::FILTER_EMPTY:
@@ -315,7 +315,7 @@ class Struct {
                             $this->$f == '' or
                             $this->_isSkipField($f)
                         ) {
-                            continue;
+                            continue 2;
                         }
                         break;
                     case self::FILTER_NORMAL:
@@ -323,6 +323,7 @@ class Struct {
                         break;
                 }
             }
+
             switch ($output){
                 case self::OUTPUT_NULL:
                     $value = $this->$f === '' ? null : $this->$f;
