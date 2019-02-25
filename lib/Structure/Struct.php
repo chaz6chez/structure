@@ -684,7 +684,7 @@ class Struct {
 
                 case self::OPERATER_FILTER_OUTPUT:
                     $match = $this->_operatorPreg($value);
-                    if(isset($match['operator'])){
+                    if(isset($match['column'])){
                         $value = $match['column'];
                     }
                     break;
