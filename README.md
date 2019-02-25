@@ -25,6 +25,7 @@
 | @rule | 类型、func、method | 以func与method的bool返回类型判断验证 |
 | @skip | 无 | 跳过验证 |
 | @ghost| 无 | 跳过输出 |
+| @key| 无 | 与toArrayKey()方法配套 |
 
 ````
 /**
@@ -44,6 +45,7 @@
 |   setScene($scene)| scene:场景 | 设置场景,在验证方法之前调用有效 |
 |   toArray($filterNull)| filterNull:是否过滤空值(可选) | 数据以数组形式输出（不过滤空字符串） |
 |   toArrayStrict($filterNull)| filterNull:是否过滤空值(可选) | 数据以数组形式输出（过滤空字符串） |
+|   outputArrayByKey($filterNull,$scene)| filterNull:是否过滤空值(可选) scene:场景 | 数据以数组形式输出（不过滤空字符串） |
 |   create($data,$validate)| data:数据 validate:是否执行验证(可选) | 输入数据,可执行验证 |
 |   validate($data)| data:数据(可选) | 验证器方法,可加载数据 |
 |   hasError($filed)| filed:条件(可选) | 错误确认，返回布尔 |
