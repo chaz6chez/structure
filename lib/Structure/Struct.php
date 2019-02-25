@@ -21,8 +21,21 @@ class Struct {
     /**
      * @var int 特殊值的处理
      */
-    protected $_operater = self::OPERATER_CLOASE;
+    protected $_operator = self::OPERATER_CLOASE;
 # -------------------- set end ------------------
+
+# -------------------- preg start ---------------
+    /**
+     * @var string 操作者正则 [用于特殊赋值的过滤和操作]
+     */
+    private $_operatorPreg = '/(?<column>[a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i';
+    /**
+     * @var string 手术刀正则 [注解]
+     */
+    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key)(?:\[(\w+)\])?\s+?(.+)/';
+# -------------------- preg end -----------------
+
+# -------------- scalpe info start --------------
     /**
      * @var array 验证信息
      */
@@ -60,6 +73,7 @@ class Struct {
      * rule content options
      */
     protected $_rco = [];
+# -------------- scalpe info end ----------------
 
     /**
      * Struct constructor.
@@ -104,14 +118,17 @@ class Struct {
      * @param int $operater
      * @return $this
      */
-    public function setOperater(int $operater){
-        $this->_operater = $operater;
+    public function setOperator(int $operater){
+        $this->_operator = $operater;
         return $this;
     }
-    
+
+    /**
+     * 重置设置项
+     */
     public function cleanSet(){
         $this->_empty_to_null = true;
-        $this->_operater = self::OPERATER_CLOASE;
+        $this->_operator = self::OPERATER_CLOASE;
     }
 
     /**
@@ -169,30 +186,8 @@ class Struct {
                 $value = ($this->$f === null) ? '' : $this->$f;
             }
 
-            switch ($this->_operater){
-                case self::OPERATER_LOAD_OUTPUT:
-                    $match = $this->_operatorPreg($value);
-                    if(isset($match['operator'])){
-                        $_data["{$f}[{$match['operator']}]"] = $match['column'];
-                    }else{
-                        $_data[$f] = $value;
-                    }
-                    break;
-
-                case self::OPERATER_FILTER_OUTPUT:
-                    $match = $this->_operatorPreg($value);
-                    if(isset($match['operator'])){
-                        $_data[$f] = $match['column'];
-                    }else{
-                        $_data[$f] = $value;
-                    }
-                    break;
-
-                case self::OPERATER_CLOASE:
-                default:
-                    $_data[$f] = $value;
-                    break;
-            }
+            $res = $this->_parsingOperator($f,$value);
+            $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
         return $_data;
@@ -229,32 +224,40 @@ class Struct {
                 }
             }
 
-            $value = $this->$f;
+            $res = $this->_parsingOperator($f,$this->$f);
+            $_data[$res[0]] = $res[1];
+        }
+        $this->cleanSet();
+        return $_data;
+    }
 
-            switch ($this->_operater){
-                case self::OPERATER_LOAD_OUTPUT:
-                    $match = $this->_operatorPreg($value);
-                    if(isset($match['operator'])){
-                        $_data["{$f}[{$match['operator']}]"] = $match['column'];
-                    }else{
-                        $_data[$f] = $value;
-                    }
-                    break;
+    /**
+     * 数组输出 [仅输出@key]
+     * @param bool $filterNull
+     * @return array
+     */
+    public function toArrayKey($filterNull = false,$checkScene = false){
+        $fields = $this->_getFields();
+        $_data = [];
 
-                case self::OPERATER_FILTER_OUTPUT:
-                    $match = $this->_operatorPreg($value);
-                    if(isset($match['operator'])){
-                        $_data[$f] = $match['column'];
-                    }else{
-                        $_data[$f] = $value;
-                    }
-                    break;
-
-                case self::OPERATER_CLOASE:
-                default:
-                    $_data[$f] = $value;
-                    break;
+        foreach ($fields as $f) {
+            $f = $f->getName();
+            if (!$this->_isKeyField($f,$checkScene)) {
+                continue; # 排除非key字段
             }
+
+            if(!is_array($this->$f)){
+                if ($filterNull){
+                    if ('null' == strtolower($this->$f)) {
+                        continue; # 过滤字符串null字段
+                    }
+                    if (is_null($this->$f)) {
+                        continue; # 过滤null字段
+                    }
+                }
+            }
+            $res = $this->_parsingOperator($f,$this->$f);
+            $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
         return $_data;
@@ -336,7 +339,10 @@ class Struct {
             if (isset($v['required'])) {
                 foreach ($v['required'] as $req) {
                     if ($this->_checkScene($req['scene'])) {
-                        if (!isset($data[$f]) || $data[$f] === '') {
+                        if (
+                            !isset($data[$f]) or
+                            $data[$f] === ''
+                        ) {
                             $this->_addError($f, $req['error']);
                             $passed = false;
                             continue 2; # 无值不验证
@@ -423,7 +429,6 @@ class Struct {
     /**
      * 手术刀
      * 分析验证规则
-     *
      */
     private function _scalpel() {
         $fields = false;
@@ -441,7 +446,7 @@ class Struct {
                 $matches = null;
                 if ($comment) {
                     # 正则筛选指令
-                    preg_match_all('/@(default|rule|required|skip|ghost)(?:\[(\w+)\])?\s+?(.+)/', $comment, $matches);
+                    preg_match_all($this->_scalpelPreg, $comment, $matches);
                     $this->_validate[$name] = [];
 
                     # 跳过未有指令的内容
@@ -457,21 +462,15 @@ class Struct {
                         switch ($rn) {
                             # 跳过
                             case 'skip':
-                                if (!isset($this->_validate[$name]['skip'])) {
-                                    $this->_validate[$name]['skip'] = [];
-                                }
-                                $this->_validate[$name]['skip'][] = [
-                                    'scene' => $rs
-                                ];
+                                $this->_setValidate('skip',$name,$rs);
                                 break;
                             # 鬼魂字段
                             case 'ghost':
-                                if (!isset($this->_validate[$name]['ghost'])) {
-                                    $this->_validate[$name]['ghost'] = [];
-                                }
-                                $this->_validate[$name]['ghost'][] = [
-                                    'scene' => $rs
-                                ];
+                                $this->_setValidate('ghost',$name,$rs);
+                                break;
+                            # key字段
+                            case 'key':
+                                $this->_setValidate('key',$name,$rs);
                                 break;
                             # 默认值
                             case 'default':
@@ -507,13 +506,10 @@ class Struct {
                                             break;
                                     }
 
-                                    if (!isset($this->_validate[$name]['default'])) {
-                                        $this->_validate[$name]['default'] = [];
-                                    }
-                                    $this->_validate[$name]['default'][] = [
+                                    $this->_setValidate('default',$name,[
                                         'content' => $v,
                                         'scene' => $rs
-                                    ];
+                                    ],false);
                                 }
 
                                 break;
@@ -553,26 +549,21 @@ class Struct {
                                 $rule['error'] = isset($rc[1]) ? $rc[1] : "{$name}格式不正确";
                                 $rule['scene'] = $rs;
 
-                                # 初始化规则部分
-                                if (!isset($this->_validate[$name]['rule'])) {
-                                    $this->_validate[$name]['rule'] = [];
-                                }
-                                $this->_validate[$name]['rule'][] = $rule;
+                                # 设置Validate
+                                $this->_setValidate('rule',$name,$rule,false);
 
                                 break;
 
                             # 必填字段
                             case 'required':
                                 $rc = explode('|', $rc);
-                                # 初始化规则部分
-                                if (!isset($this->_validate[$name]['required'])) {
-                                    $this->_validate[$name]['required'] = [];
-                                }
-                                $this->_validate[$name]['required'][] = [
+
+                                # 设置Validate
+                                $this->_setValidate('required',$name,[
                                     'content' => true,
                                     'scene' => $rs,
                                     'error' => isset($rc[1]) ? $rc[1] : "{$name}不能为空",
-                                ];
+                                ],false);
                                 break;
                         }
                     }
@@ -586,9 +577,43 @@ class Struct {
      * @param $value
      * @return mixed
      */
-    protected function _operatorPreg($value){
-        preg_match('/(?<column>[a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i', $value, $match);
+    private function _operatorPreg($value){
+        preg_match($this->_operatorPreg, $value, $match);
         return $match;
+    }
+
+    /**
+     * 分析operator
+     * @param $key
+     * @param $value
+     * @return array
+     *
+     * key   = array[0]
+     * value = array[1]
+     */
+    private function _parsingOperator($key,$value){
+        switch ($this->_operator){
+            case self::OPERATER_LOAD_OUTPUT:
+                $match = $this->_operatorPreg($value);
+                if(isset($match['operator'])){
+                    $key = "{$key}[{$match['operator']}]";
+                    $value = $match['column'];
+                }
+                break;
+
+            case self::OPERATER_FILTER_OUTPUT:
+                $match = $this->_operatorPreg($value);
+                if(isset($match['operator'])){
+                    $value = $match['column'];
+                }
+                break;
+
+            case self::OPERATER_CLOASE:
+            default:
+
+                break;
+        }
+        return [$key,$value];
     }
 
     /**
@@ -626,7 +651,7 @@ class Struct {
     private function _checkScene($scene) {
         # 如果设置了当前场景,那么当前场景的设置或者未指定场景的指令会被应用
         # 否者,只有未指定场景的指令会被应用
-        return $scene == '' || $this->_scene == $scene;
+        return $scene == '' or $this->_scene == $scene;
     }
 
     /**
@@ -659,6 +684,41 @@ class Struct {
             }
         }
         return false;
+    }
+
+    /**
+     * 是否为key的字段
+     * @param $field
+     * @return bool
+     */
+    private function _isKeyField($field,$scene = false) {
+        if (isset($this->_validate[$field]['key'])) {
+            if($scene){
+                foreach ($this->_validate[$field]['key'] as $v) {
+                    if ($this->_checkScene($v['scene'])) {
+                        return true;
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 设置验证内容
+     * @param $tag
+     * @param $name
+     * @param $value
+     * @param bool $isScene 是否仅传递scene
+     */
+    private function _setValidate($tag,$name,$value,$isScene = true){
+        if (!isset($this->_validate[$name][$tag])) {
+            $this->_validate[$name][$tag] = [];
+        }
+        $this->_validate[$name][$tag][] = $isScene ? [
+            'scene' => $value
+        ] : $value;
     }
 
     /**
