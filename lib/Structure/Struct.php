@@ -39,9 +39,9 @@ class Struct {
 
 # -------------------- preg start ---------------
     /**
-     * @var string 操作者正则 [用于特殊赋值的过滤和操作]
+     * @var string 操作者正则 [用于特殊赋值的过滤和操作] [column仅做了包含性判断]
      */
-    private $_operatorPreg = '/(?<column>[a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i';
+    private $_operatorPreg = '/(?<column>[-.a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i';
     /**
      * @var string 手术刀正则 [注解]
      */
@@ -134,6 +134,13 @@ class Struct {
     public function setOperator(int $operater){
         $this->_operator = $operater;
         return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getOperator(){
+        return $this->_operator;
     }
 
     /**
