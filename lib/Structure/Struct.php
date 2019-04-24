@@ -683,10 +683,21 @@ class Struct {
         if($value){
             switch ($this->_operator){
                 case self::OPERATER_LOAD_OUTPUT:
-                    $match = $this->_operatorPreg($value);
-                    if(isset($match['operator'])){
-                        $key = "{$key}[{$match['operator']}]";
-                        $value = $match['column'];
+                    $valueArr = explode('|',$value);
+                    if(count($valueArr) > 1){
+                        foreach ($valueArr as $value){
+                            $match = $this->_operatorPreg($value);
+                            if(isset($match['operator'])){
+                                $key = "{$key}[{$match['operator']}]";
+                                $value = $match['column'];
+                            }
+                        }
+                    }else{
+                        $match = $this->_operatorPreg($value);
+                        if(isset($match['operator'])){
+                            $key = "{$key}[{$match['operator']}]";
+                            $value = $match['column'];
+                        }
                     }
                     break;
 
