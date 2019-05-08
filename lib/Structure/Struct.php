@@ -98,7 +98,7 @@ class Struct {
         $this->_scalpel();                       # 加载手术刀
         $this->setScene($scene);                 # 加载场景
         $this->_setDefault();                    # 加载默认值
-        if (!is_null($data)) {
+        if ($data and is_array($data)) {
             $this->create($data, false); # 创建数据
         }
     }
