@@ -303,7 +303,7 @@ class Struct {
                     case self::FILTER_STRICT:
                         if (
                             is_null($this->$f) or
-                            $this->$f == '' or
+                            $this->$f === '' or
                             $this->_isSkipField($f)
                         ) {
                             continue 2;
@@ -319,7 +319,7 @@ class Struct {
                         break;
                     case self::FILTER_EMPTY:
                         if (
-                            $this->$f == '' or
+                            $this->$f === '' or
                             $this->_isSkipField($f)
                         ) {
                             continue 2;
