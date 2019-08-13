@@ -209,10 +209,7 @@ class Struct {
             }else{
                 $value = ($this->$f === null) ? '' : $this->$f;
             }
-
-            if($this->_isOperatorField($f)){
-                $res = $this->_parsingOperator($f,$value);
-            }
+            $res = $this->_parsingOperator($f,$value);
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -246,9 +243,7 @@ class Struct {
                     }
                 }
             }
-            if($this->_isOperatorField($f)){
-                $res = $this->_parsingOperator($f,$this->$f);
-            }
+            $res = $this->_parsingOperator($f,$this->$f);
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -278,9 +273,7 @@ class Struct {
                     }
                 }
             }
-            if($this->_isOperatorField($f)){
-                $res = $this->_parsingOperator($f,$this->$f);
-            }
+            $res = $this->_parsingOperator($f,$this->$f);
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -355,11 +348,7 @@ class Struct {
                     $value = $this->$f;
                     break;
             }
-
-            if($this->_isOperatorField($f)){
-                $res = $this->_parsingOperator($f,$value);
-            }
-
+            $res = $this->_parsingOperator($f,$value);
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -575,6 +564,10 @@ class Struct {
                             case 'key':
                                 $this->_setValidate('key',$name,$rs);
                                 break;
+                            # operator字段
+                            case 'operator':
+                                $this->_setValidate('operator',$name,$rs);
+                                break;
                             # 默认值
                             case 'default':
                                 $rc = explode(':', $rc, 2);
@@ -695,7 +688,10 @@ class Struct {
      * value = array[1]
      */
     private function _parsingOperator($key,$value){
-        if($value){
+        if(
+            $this->_isOperatorField($key) and
+            $value
+        ){
             switch ($this->_operator){
                 case self::OPERATER_LOAD_OUTPUT:
                     $valueArr = explode('|',$value);
