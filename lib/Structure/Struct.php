@@ -34,18 +34,23 @@ class Struct {
     /**
      * @var int 特殊值的处理
      */
-    protected $_operator = self::OPERATER_CLOASE;
+    protected $_operator        = self::OPERATER_CLOASE;
+
+    /**
+     * @var bool 默认对带 @operator标签的进行转化
+     */
+    protected $_operatorKeyNeed = true;
 # -------------------- set end ------------------
 
 # -------------------- preg start ---------------
     /**
      * @var string 操作者正则 [用于特殊赋值的过滤和操作] [column仅做了包含性判断]
      */
-    private $_operatorPreg = '/(?<column>[-.a-zA-Z0-9_]+)(\[(?<operator>\+|\-|\*|\/)\])?/i';
+    private $_operatorPreg = '/(?<column>[-.a-zA-Z0-9_*]+)(\[(?<operator>\+|\-|\*|\/)\])?/i';
     /**
      * @var string 手术刀正则 [注解]
      */
-    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key)(?:\[(\w+)\])?\s+?(.+)/';
+    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator)(?:\[(\w+)\])?\s+?(.+)/';
 # -------------------- preg end -----------------
 
 # -------------- scalpe info start --------------
@@ -131,8 +136,9 @@ class Struct {
      * @param int $operater
      * @return $this
      */
-    public function setOperator(int $operater){
+    public function setOperator(int $operater,$need = true){
         $this->_operator = $operater;
+        $this->_operatorKeyNeed = $need;
         return $this;
     }
 
@@ -149,6 +155,7 @@ class Struct {
     public function cleanSet(){
         $this->_empty_to_null = true;
         $this->_operator = self::OPERATER_CLOASE;
+        $this->_operatorKeyNeed = true;
     }
 
     /**
@@ -203,7 +210,9 @@ class Struct {
                 $value = ($this->$f === null) ? '' : $this->$f;
             }
 
-            $res = $this->_parsingOperator($f,$value);
+            if($this->_isOperatorField($f)){
+                $res = $this->_parsingOperator($f,$value);
+            }
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -237,8 +246,9 @@ class Struct {
                     }
                 }
             }
-
-            $res = $this->_parsingOperator($f,$this->$f);
+            if($this->_isOperatorField($f)){
+                $res = $this->_parsingOperator($f,$this->$f);
+            }
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -268,7 +278,9 @@ class Struct {
                     }
                 }
             }
-            $res = $this->_parsingOperator($f,$this->$f);
+            if($this->_isOperatorField($f)){
+                $res = $this->_parsingOperator($f,$this->$f);
+            }
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -344,7 +356,10 @@ class Struct {
                     break;
             }
 
-            $res = $this->_parsingOperator($f,$value);
+            if($this->_isOperatorField($f)){
+                $res = $this->_parsingOperator($f,$value);
+            }
+
             $_data[$res[0]] = $res[1];
         }
         $this->cleanSet();
@@ -780,6 +795,25 @@ class Struct {
     private function _isSkipField($field) {
         if (isset($this->_validate[$field]['skip'])) {
             foreach ($this->_validate[$field]['skip'] as $v) {
+                if ($this->_checkScene($v['scene'])) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 是否为Operator的字段
+     * @param $field
+     * @return bool
+     */
+    private function _isOperatorField($field) {
+        if(!$this->_operatorKeyNeed){
+            return true;
+        }
+        if (isset($this->_validate[$field]['operator'])) {
+            foreach ($this->_validate[$field]['operator'] as $v) {
                 if ($this->_checkScene($v['scene'])) {
                     return true;
                 }
