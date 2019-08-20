@@ -693,6 +693,15 @@ class Struct {
             $value
         ){
             switch ($this->_operator){
+                /**
+                 * 说明
+                 *
+                 *  1.多重数据可以以 | 分割
+                 *      例： 123[>]|456[<] 会转化成两个键和值
+                 *  2.<> >< 两种方式需要使用 , 间隔数据 
+                 *      例：123,456[><] 会转化成 [123,456]
+                 *
+                 */
                 case self::OPERATER_LOAD_OUTPUT:
                     $valueArr = explode('|',$value);
                     if(count($valueArr) > 1){
@@ -708,6 +717,12 @@ class Struct {
                         if(isset($match['operator'])){
                             $key = "{$key}[{$match['operator']}]";
                             $value = $match['column'];
+                            if(
+                                $match['operator'] == '<>' or
+                                $match['operator'] == '><'
+                            ){
+                                $value = explode(',',$match['column']);
+                            }
                         }
                     }
                     break;
