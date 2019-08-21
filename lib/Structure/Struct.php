@@ -46,7 +46,8 @@ class Struct {
     /**
      * @var string 操作者正则 [用于特殊赋值的过滤和操作] [column仅做了包含性判断]
      */
-    private $_operatorPreg = '/(?<column>[-.a-zA-Z0-9_*]+)(\[(?<operator>\+|\-|\*|\/|>|<|<>|><|\!|>=|<=)\])?/i';
+    private $_operatorPreg = '/(?<column>[\s\S]*(?=\[(?<operator>\+|\-|\*|\/|>|<|<>|><|\!|>=|<=)\]$)|[\s\S]*)/';
+    # '/(?<column>[-.a-zA-Z0-9_*]+)(\[(?<operator>\+|\-|\*|\/|>|<|<>|><|\!|>=|<=)\])?/i';
     /**
      * @var string 手术刀正则 [注解]
      */
@@ -690,7 +691,8 @@ class Struct {
     private function _parsingOperator($key,$value){
         if(
             $this->_isOperatorField($key) and
-            $value
+            $value and
+            is_string($value)
         ){
             switch ($this->_operator){
                 /**
@@ -698,7 +700,7 @@ class Struct {
                  *
                  *  1.多重数据可以以 | 分割
                  *      例： 123[>]|456[<] 会转化成两个键和值
-                 *  2.<> >< 两种方式需要使用 , 间隔数据 
+                 *  2.<> >< 两种方式需要使用 , 间隔数据
                  *      例：123,456[><] 会转化成 [123,456]
                  *
                  */
