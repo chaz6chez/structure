@@ -51,7 +51,8 @@ class Struct {
     /**
      * @var string 手术刀正则 [注解]
      */
-    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator)(?:\[(\w+)\])?\s+?(.+)/';
+    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator)(?:\[(\w+)\])?\s+?(.|\s+)/';
+//    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator)(?:\[(\w+)\])?\s+?(.+)/';
 # -------------------- preg end -----------------
 
 # -------------- scalpe info start --------------
@@ -538,6 +539,7 @@ class Struct {
                 # 默认正则结果
                 $matches = null;
                 if ($comment) {
+
                     # 正则筛选指令
                     preg_match_all($this->_scalpelPreg, $comment, $matches);
                     $this->_validate[$name] = [];
@@ -555,19 +557,19 @@ class Struct {
                         switch ($rn) {
                             # 跳过
                             case 'skip':
-                                $this->_setValidate('skip',$name,$rs);
+                                $this->_setValidate($rn,$name,$rs);
                                 break;
                             # 鬼魂字段
                             case 'ghost':
-                                $this->_setValidate('ghost',$name,$rs);
+                                $this->_setValidate($rn,$name,$rs);
                                 break;
                             # key字段
                             case 'key':
-                                $this->_setValidate('key',$name,$rs);
+                                $this->_setValidate($rn,$name,$rs);
                                 break;
                             # operator字段
                             case 'operator':
-                                $this->_setValidate('operator',$name,$rs);
+                                $this->_setValidate($rn,$name,$rs);
                                 break;
                             # 默认值
                             case 'default':
@@ -603,7 +605,7 @@ class Struct {
                                             break;
                                     }
 
-                                    $this->_setValidate('default',$name,[
+                                    $this->_setValidate($rn,$name,[
                                         'content' => $v,
                                         'scene' => $rs
                                     ],false);
@@ -647,7 +649,7 @@ class Struct {
                                 $rule['scene'] = $rs;
 
                                 # 设置Validate
-                                $this->_setValidate('rule',$name,$rule,false);
+                                $this->_setValidate($rn,$name,$rule,false);
 
                                 break;
 
@@ -656,7 +658,7 @@ class Struct {
                                 $rc = explode('|', $rc);
 
                                 # 设置Validate
-                                $this->_setValidate('required',$name,[
+                                $this->_setValidate($rn,$name,[
                                     'content' => true,
                                     'scene' => $rs,
                                     'error' => isset($rc[1]) ? $rc[1] : "{$name}不能为空",
