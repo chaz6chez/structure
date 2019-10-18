@@ -845,12 +845,11 @@ class Struct {
         if (isset($this->_validate[$field]['key'])) {
             if($scene){
                 foreach ($this->_validate[$field]['key'] as $v) {
-                    if (isset($v['sence']) and $v['sence'] == $scene) {
+                    if ($v['scene'] == '' or $v['scene'] == $scene) {
                         return true;
-                    }else{
-                        return false;
                     }
                 }
+                return false;
             }
             return true;
         }
