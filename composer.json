@@ -17,6 +17,5 @@
             "Structure\\": "lib/Structure",
             "Example\\": "examples/"
         }
-    },
-    "minimum-stability": "dev"
+    }
 }
