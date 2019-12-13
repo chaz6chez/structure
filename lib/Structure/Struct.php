@@ -881,8 +881,13 @@ class Struct {
      */
     private function _addError($field, $error) {
         $error = explode(':',$error);
-        $this->_errors[$field] = $error[0];
-        $this->_codes[$field] = isset($error[1]) ? $error[1] : '500';
+        if(count($error) > 1){
+            $this->_errors[$field] = $error[0];
+            $this->_codes[$field] = isset($error[1]) ? $error[1] : '500';
+        }else{
+            $this->_errors[$field] = $error;
+            $this->_codes[$field] = '0';
+        }
     }
 
 }
