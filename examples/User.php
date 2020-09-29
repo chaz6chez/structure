@@ -21,12 +21,14 @@ class User extends Struct{
     /**
      * @var
      * @required true|性别不能为空
+     * @operator abb
      */
     public $sex;
 
     /**
      * @var
      * @required[check] true|验证时，年龄不能为空
+     * @operator[check] key
      */
     public $age;
 }

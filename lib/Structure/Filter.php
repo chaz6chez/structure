@@ -13,6 +13,7 @@ abstract class Filter {
 
     protected static $_filters = [
         'array'  => 'Structure\Handle\Arrays',
+        'assoc'  => 'Structure\Handle\Assoc',
         'bool'   => 'Structure\Handle\Booleans',
         'float'  => 'Structure\Handle\Floats',
         'int'    => 'Structure\Handle\Ints',
@@ -60,7 +61,7 @@ abstract class Filter {
     /**
      * 工厂入口
      * @param $filter string 例：string,max:1
-     * @return mixed
+     * @return Filter
      */
     public static function factory($filter) {
         # 判断继承

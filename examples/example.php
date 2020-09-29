@@ -31,3 +31,17 @@
 # 3.修改Handle下类库文件的_defaultOptions数据,可以更改默认规则.
 # 4.default标签可使用func和method,与rule区别是,
 # rule使用其返回true or false来进行判断,default直接使用其返回值.
+
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+function is_assoc($array){
+    return boolval(array_keys($array) !== range(0, count($array) - 1));
+}
+
+$support = \Example\User::factory();
+$support->setScene('check');
+$support->age = '123[>]|456[<]';
+$support->sex = '1';
+//var_dump($support);
+echo json_encode(
+    $support->setOperator($support::OPERATER_LOAD_OUTPUT)->outputArray($support::FILTER_STRICT)
+);

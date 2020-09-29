@@ -135,7 +135,8 @@ class Struct {
 
     /**
      * 设置过滤类型
-     * @param int $operater
+     * @param int $operater OPERATER_开头的常量进行设置
+     * @param bool $need    false:不会判断场景 true:会判断特定场景
      * @return $this
      */
     public function setOperator(int $operater,$need = true){
@@ -212,7 +213,13 @@ class Struct {
                 $value = ($this->$f === null) ? '' : $this->$f;
             }
             $res = $this->_parsingOperator($f,$value);
-            $_data[$res[0]] = $res[1];
+            if(Filter::factory('assoc')->validate($res)){
+                foreach($res as $k => $v){
+                    $_data[$k] = $v;
+                }
+            }else{
+                $_data[$res[0]] = $res[1];
+            }
         }
         $this->cleanSet();
         return $_data;
@@ -246,7 +253,13 @@ class Struct {
                 }
             }
             $res = $this->_parsingOperator($f,$this->$f);
-            $_data[$res[0]] = $res[1];
+            if(Filter::factory('assoc')->validate($res)){
+                foreach($res as $k => $v){
+                    $_data[$k] = $v;
+                }
+            }else{
+                $_data[$res[0]] = $res[1];
+            }
         }
         $this->cleanSet();
         return $_data;
@@ -276,7 +289,13 @@ class Struct {
                 }
             }
             $res = $this->_parsingOperator($f,$this->$f);
-            $_data[$res[0]] = $res[1];
+            if(Filter::factory('assoc')->validate($res)){
+                foreach($res as $k => $v){
+                    $_data[$k] = $v;
+                }
+            }else{
+                $_data[$res[0]] = $res[1];
+            }
         }
         $this->cleanSet();
         return $_data;
@@ -286,9 +305,10 @@ class Struct {
      * 数组输出 [新版]
      * @param int $filter
      * @param int $output
+     * @param string $scene
      * @return array
      */
-    public function outputArray($filter = self::FILTER_NORMAL,$output = self::OUTPUT_NORMAL,$secen = ''){
+    public function outputArray($filter = self::FILTER_NORMAL,$output = self::OUTPUT_NORMAL, $scene = ''){
         $fields = $this->_getFields();
         $_data = [];
         foreach ($fields as $f) {
@@ -302,7 +322,7 @@ class Struct {
                 switch ($filter){
                     case self::FILTER_KEY:
                         if (
-                            !$this->_isKeyField($this->$f,$secen)
+                            !$this->_isKeyField($this->$f,$scene)
                         ) {
                             continue 2;
                         }
@@ -351,7 +371,13 @@ class Struct {
                     break;
             }
             $res = $this->_parsingOperator($f,$value);
-            $_data[$res[0]] = $res[1];
+            if(Filter::factory('assoc')->validate($res)){
+                foreach($res as $k => $v){
+                    $_data[$k] = $v;
+                }
+            }else{
+                $_data[$res[0]] = $res[1];
+            }
         }
         $this->cleanSet();
         return $_data;
@@ -573,7 +599,10 @@ class Struct {
                                 break;
                             # operator字段
                             case 'operator':
-                                $this->_setValidate($rn,$name,$rs);
+                                $this->_setValidate($rn,$name,[
+                                    'content' => $rc,
+                                    'scene'   => $rs,
+                                ],false);
                                 break;
                             # 默认值
                             case 'default':
@@ -602,7 +631,7 @@ class Struct {
                                             $v = json_decode($v, true);
                                             break;
                                         case 'bool':
-                                            $v = $v === 'true' ? true : false;
+                                            $v = boolval($v === 'true');
                                             break;
                                         default:
                                             $v = strval($v);
@@ -713,13 +742,16 @@ class Struct {
                 case self::OPERATER_LOAD_OUTPUT:
                     $valueArr = explode('|',$value);
                     if(count($valueArr) > 1){
+                        $res = [];
                         foreach ($valueArr as $value){
                             $match = $this->_operatorPreg($value);
                             if(isset($match['operator'])){
-                                $key = "{$key}[{$match['operator']}]";
-                                $value = $match['column'];
+                                $res["{$key}[{$match['operator']}]"] = $match['column'];
+//                                $key = "{$key}[{$match['operator']}]";
+//                                $value = $match['column'];
                             }
                         }
+                        return $res;
                     }else{
                         $match = $this->_operatorPreg($value);
                         if(isset($match['operator'])){
@@ -748,7 +780,6 @@ class Struct {
                     break;
             }
         }
-
         return [$key,$value];
     }
 
