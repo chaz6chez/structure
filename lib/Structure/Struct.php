@@ -392,13 +392,17 @@ class Struct {
     
     /**
      * 清空
+     * @param bool $default
      * @return bool
      */
-    public function clean(){
+    public function clean($default = false){
         $fields = $this->_getFields();
         foreach ($fields as $f) {
             $f = $f->getName();
             $this->$f = null;
+        }
+        if($default){
+            $this->_setDefault();
         }
         return true;
     }
