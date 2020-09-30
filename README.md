@@ -49,9 +49,9 @@ class User extends Struct{
 
  - 将每一行分析四个区域
    - <a href="#标签区">a区：标签区</a>
-   - <a href="#场景区">b区：场景区</a>
-   - <a href="#验证区">c区：验证区</a>
-   - <a href="#内容信息">d区：内容信息</a>
+   - b区：场景区
+   - c区：验证区
+   - d区：内容信息
 ````
     a区   b区     c区       d区
  @验证方式[场景] 验证方式|错误提示语:错误码
@@ -64,15 +64,15 @@ class User extends Struct{
 
 | 标签名 | 方式 | 说明|
 | :---: | :---:| :--- |
-| @default | 类型、func、method | func与method是将返回值默认赋予该标签 |
-| @required| true | 判断是否为必要值 |
-| @operator| 无 | 与toArrayKey()方法配套 |
-| @rule | 类型、func、method | 以func与method的bool返回类型判断验证 |
-| @skip | 无 | 跳过验证 |
-| @ghost| 无 | 跳过输出 |
-| @key| 无 | 与toArrayKey()方法配套 |
+| <a href="#@default">@default</a> | 类型、func、method | func与method是将返回值默认赋予该标签 |
+| <a href="#@required">@required</a>| true | 判断是否为必要值 |
+| <a href="#@operator">@operator</a>| 无 | 与toArrayKey()方法配套 |
+| <a href="#@rule">@rule</a> | 类型、func、method | 以func与method的bool返回类型判断验证 |
+| <a href="#@skip">@skip</a> | 无 | 跳过验证 |
+| <a href="#@ghost">@ghost</a>| 无 | 跳过输出 |
+| <a href="#@key">@key</a>| 无 | 与toArrayKey()方法配套 |
 
-### @default
+### <a id="@default">@default</a>
 - 将该属性标记默认模式
 - 在使用任何输出方法时，如outputArray()，拥有该标签的属性都会使用验证区的执行方式进行默认赋值
 - 如本身外部对该属性进行赋值，则默认不会生效
@@ -99,7 +99,7 @@ class User extends Struct{
         return 'abc';
     }
 ````
-### @required
+### <a id="@required">@required</a>
 - 将该属性标记要求验证
 - 在使用validate()方法或是create()方法开启validate=true后，
 不满足条件的属性，会将d区内容增加至error内容
@@ -109,7 +109,7 @@ class User extends Struct{
      */
     public $name;
 ````
-### @rule
+### <a id="@rule">@rule</a>
 - 将该属性标记规则模式
 - 在使用validate()方法或是create()方法开启validate=true后，
   不满足条件的属性，会将d区内容增加至error内容
@@ -147,7 +147,7 @@ class User extends Struct{
         return $v === 'abc';
     }
 ````
-### @operator
+### <a id="@operator">@operator</a>
 - 将该属性标记操作字段
 - 使用输出的时候可以将属性值进行转化操作
 - 需配合setOperator()方法
@@ -180,7 +180,7 @@ $user->setOperator($user::OPERATER_LOAD_OUTPUT)->outputArray();
     'id[<>]' => [123,456],
 ];
 ````
-### @mapping
+### <a id="@mapping">@mapping</a>
 - 将该属性标记映射处理
 - 使用outputArrayUseMapping()输出的时候可以将属性字段进行转化输出
 - 支持与@operator共存
@@ -198,13 +198,13 @@ $user->outputArrayUseMapping();
     'key' => 123
 ]
 ````
-### @ghost
+### <a id="@ghost">@ghost</a>
 - 将该属性标记幽灵字段
 - 在使用输出方法，如outputArray()，则不会被输出
-### @key
+### <a id="@key">@key</a>
 - 将该属性标记钥匙字段
 - 在使用outputArrayByKey()时可以做到仅输出钥匙字段
-### @skip
+### <a id="@skip">@skip</a>
 - 将该属性标记忽略字段
 - 跳过验证，但不影响输出
 
