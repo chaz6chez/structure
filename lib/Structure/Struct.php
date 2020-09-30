@@ -124,6 +124,22 @@ class Struct {
     }
 
     /**
+     * @param $var
+     * @param Struct $struct
+     * @return false|int|string
+     */
+    public function getVariableNameUseMapping(&$var,Struct $struct){
+        $tmp = $var;
+        $var = 'tmp_value_'.mt_rand();
+        $name = array_search($var, $struct->toArray());
+        $var = $tmp;
+        if($mapping = $this->_isMappingField($name, $struct->_scene)){
+            return $mapping;
+        }
+        return $name;
+    }
+
+    /**
      * 设置empty to null
      * @param bool $bool
      * @return $this
@@ -283,7 +299,7 @@ class Struct {
 
         foreach ($fields as $f) {
             $f = $f->getName();
-            if (!$this->_isKeyField($f,$scene)) {
+            if (!$this->_isKeyField($f,$scene ? $scene : $this->_scene)) {
                 continue; # 排除非key字段
             }
 
@@ -331,7 +347,7 @@ class Struct {
                 switch ($filter){
                     case self::FILTER_KEY:
                         if (
-                            !$this->_isKeyField($this->$f,$scene)
+                            !$this->_isKeyField($this->$f,$scene ? $scene : $this->_scene)
                         ) {
                             continue 2;
                         }
@@ -416,7 +432,7 @@ class Struct {
                 switch ($filter){
                     case self::FILTER_KEY:
                         if (
-                        !$this->_isKeyField($this->$f,$scene)
+                        !$this->_isKeyField($this->$f,$scene ? $scene : $this->_scene)
                         ) {
                             continue 2;
                         }
@@ -470,25 +486,35 @@ class Struct {
                     if($k === 'key'){
                         continue;
                     }
-                    if(
-                        isset($this->_validate[$res['key']]['mapping']) and
-                        $key = $this->_validate[$res['key']]['mapping'][0]['content']
-                    ){
+                    if($key = $this->_isMappingField($f,$scene ? $scene : $this->_scene)){
                         $_data[$key.$k] = $v;
                     }else{
-                        $_data[$res['key']] = $v;
+                        $_data[$f] = $v;
                     }
+//                    if(
+//                        isset($this->_validate[$res['key']]['mapping']) and
+//                        $key = $this->_validate[$res['key']]['mapping'][0]['content']
+//                    ){
+//                        $_data[$key.$k] = $v;
+//                    }else{
+//                        $_data[$res['key']] = $v;
+//                    }
 
                 }
             }else{
-                if(
-                    isset($this->_validate[$res[0]]['mapping']) and
-                    $key = $this->_validate[$res[0]]['mapping'][0]['content']
-                ){
+                if($key = $this->_isMappingField($f,$scene ? $scene : $this->_scene)){
                     $_data[$key] = $res[1];
                 }else{
                     $_data[$res[0]] = $res[1];
                 }
+//                if(
+//                    isset($this->_validate[$res[0]]['mapping']) and
+//                    $key = $this->_validate[$res[0]]['mapping'][0]['content']
+//                ){
+//                    $_data[$key] = $res[1];
+//                }else{
+//                    $_data[$res[0]] = $res[1];
+//                }
             }
         }
         $this->cleanSet();
@@ -1019,12 +1045,12 @@ class Struct {
             if($scene){
                 foreach ($this->_validate[$field]['mapping'] as $v) {
                     if ($v['scene'] == '' or $v['scene'] == $scene) {
-                        return true;
+                        return $v['content'];
                     }
                 }
                 return false;
             }
-            return true;
+            return $this->_validate[$field]['mapping'][0]['content'];
         }
         return false;
     }

@@ -42,5 +42,5 @@ $support->age = '123[>]|456[<]';
 $support->sex = '1';
 //var_dump($support);
 echo json_encode(
-    $support->outputArray($support::FILTER_STRICT)
+    $support->outputArrayUseMapping($support::FILTER_STRICT)
 );
