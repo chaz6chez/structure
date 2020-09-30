@@ -52,7 +52,7 @@ class Struct {
      * @var string 手术刀正则 [注解]
      */
 #    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator)(?:\[(\w+)\])?\s+?(.+|\s+)/';
-    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator)(?:\[(\w+)\])?\s+?(.+)/';
+    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator|mapping)(?:\[(\w+)\])?\s+?(.+)/';
 # -------------------- preg end -----------------
 
 # -------------- scalpe info start --------------
@@ -215,7 +215,10 @@ class Struct {
             $res = $this->_parsingOperator($f,$value);
             if(Filter::factory('assoc')->validate($res)){
                 foreach($res as $k => $v){
-                    $_data[$k] = $v;
+                    if($k === 'key'){
+                        continue;
+                    }
+                    $_data[$res['key'].$k] = $v;
                 }
             }else{
                 $_data[$res[0]] = $res[1];
@@ -255,7 +258,10 @@ class Struct {
             $res = $this->_parsingOperator($f,$this->$f);
             if(Filter::factory('assoc')->validate($res)){
                 foreach($res as $k => $v){
-                    $_data[$k] = $v;
+                    if($k === 'key'){
+                        continue;
+                    }
+                    $_data[$res['key'].$k] = $v;
                 }
             }else{
                 $_data[$res[0]] = $res[1];
@@ -291,7 +297,10 @@ class Struct {
             $res = $this->_parsingOperator($f,$this->$f);
             if(Filter::factory('assoc')->validate($res)){
                 foreach($res as $k => $v){
-                    $_data[$k] = $v;
+                    if($k === 'key'){
+                        continue;
+                    }
+                    $_data[$res['key'].$k] = $v;
                 }
             }else{
                 $_data[$res[0]] = $res[1];
@@ -373,10 +382,113 @@ class Struct {
             $res = $this->_parsingOperator($f,$value);
             if(Filter::factory('assoc')->validate($res)){
                 foreach($res as $k => $v){
-                    $_data[$k] = $v;
+                    if($k === 'key'){
+                        continue;
+                    }
+                    $_data[$res['key'].$k] = $v;
                 }
             }else{
                 $_data[$res[0]] = $res[1];
+            }
+        }
+        $this->cleanSet();
+        return $_data;
+    }
+
+    /**
+     * 数组映射输出
+     * @param int $filter
+     * @param int $output
+     * @param string $scene
+     * @return array
+     */
+    public function outputArrayUseMapping($filter = self::FILTER_NORMAL,$output = self::OUTPUT_NORMAL, $scene = ''){
+        $fields = $this->_getFields();
+        $_data = [];
+        foreach ($fields as $f) {
+            $f = $f->getName();
+
+            if ($this->_isGhostField($f)) {
+                continue; # 排除鬼魂字段
+            }
+
+            if (!is_array($this->$f)){
+                switch ($filter){
+                    case self::FILTER_KEY:
+                        if (
+                        !$this->_isKeyField($this->$f,$scene)
+                        ) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_STRICT:
+                        if (
+                            is_null($this->$f) or
+                            $this->$f === '' or
+                            $this->_isSkipField($f)
+                        ) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_NULL:
+                        if (
+                            is_null($this->$f) or
+                            $this->_isSkipField($f)
+                        ) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_EMPTY:
+                        if (
+                            $this->$f === '' or
+                            $this->_isSkipField($f)
+                        ) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_NORMAL:
+                    default:
+                        break;
+                }
+            }
+
+            switch ($output){
+                case self::OUTPUT_NULL:
+                    $value = $this->$f === '' ? null : $this->$f;
+                    break;
+                case self::OUTPUT_EMPTY:
+                    $value = is_null($this->$f) ? '' : $this->$f;
+                    break;
+                case self::OUTPUT_NORMAL:
+                default:
+                    $value = $this->$f;
+                    break;
+            }
+            $res = $this->_parsingOperator($f,$value);
+            if(Filter::factory('assoc')->validate($res)){
+                foreach($res as $k => $v){
+                    if($k === 'key'){
+                        continue;
+                    }
+                    if(
+                        isset($this->_validate[$res['key']]['mapping']) and
+                        $key = $this->_validate[$res['key']]['mapping'][0]['content']
+                    ){
+                        $_data[$key.$k] = $v;
+                    }else{
+                        $_data[$res['key']] = $v;
+                    }
+
+                }
+            }else{
+                if(
+                    isset($this->_validate[$res[0]]['mapping']) and
+                    $key = $this->_validate[$res[0]]['mapping'][0]['content']
+                ){
+                    $_data[$key] = $res[1];
+                }else{
+                    $_data[$res[0]] = $res[1];
+                }
             }
         }
         $this->cleanSet();
@@ -599,9 +711,12 @@ class Struct {
                                 break;
                             # operator字段
                             case 'operator':
+                                $this->_setValidate($rn,$name,$rs);
+                                break;
+                            case 'mapping':
                                 $this->_setValidate($rn,$name,[
                                     'content' => $rc,
-                                    'scene'   => $rs,
+                                    'scene' => $rs
                                 ],false);
                                 break;
                             # 默认值
@@ -746,10 +861,10 @@ class Struct {
                         foreach ($valueArr as $value){
                             $match = $this->_operatorPreg($value);
                             if(isset($match['operator'])){
-                                $res["{$key}[{$match['operator']}]"] = $match['column'];
-//                                $key = "{$key}[{$match['operator']}]";
-//                                $value = $match['column'];
+//                                $res["{$key}[{$match['operator']}]"] = $match['column'];
+                                $res["[{$match['operator']}]"] = $match['column'];
                             }
+                            $res['key'] = $key;
                         }
                         return $res;
                     }else{
@@ -882,6 +997,27 @@ class Struct {
         if (isset($this->_validate[$field]['key'])) {
             if($scene){
                 foreach ($this->_validate[$field]['key'] as $v) {
+                    if ($v['scene'] == '' or $v['scene'] == $scene) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 是否为mapping的字段
+     * @param $field
+     * @param string $scene
+     * @return bool
+     */
+    private function _isMappingField($field,$scene = '') {
+        if (isset($this->_validate[$field]['mapping'])) {
+            if($scene){
+                foreach ($this->_validate[$field]['mapping'] as $v) {
                     if ($v['scene'] == '' or $v['scene'] == $scene) {
                         return true;
                     }

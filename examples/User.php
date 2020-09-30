@@ -14,21 +14,21 @@ class User extends Struct{
 
     /**
      * @var
-     * @rule string,max:10|名字字节长度不可超过10
      */
     public $name;
 
     /**
      * @var
-     * @required true|性别不能为空
-     * @operator abb
+     * @mapping ass
+     * @required true
+     * @rule string,min:10,max:20|aaaaa
      */
     public $sex;
 
     /**
      * @var
-     * @required[check] true|验证时，年龄不能为空
-     * @operator[check] key
+     * @mapping key
+     * @operator true
      */
     public $age;
 }

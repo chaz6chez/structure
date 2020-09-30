@@ -38,10 +38,9 @@ function is_assoc($array){
 }
 
 $support = \Example\User::factory();
-$support->setScene('check');
 $support->age = '123[>]|456[<]';
 $support->sex = '1';
 //var_dump($support);
 echo json_encode(
-    $support->setOperator($support::OPERATER_LOAD_OUTPUT)->outputArray($support::FILTER_STRICT)
+    $support->outputArray($support::FILTER_STRICT)
 );
