@@ -212,18 +212,18 @@ $user->outputArrayUseMapping();
 ***
 ## 方法
 
-####factory($data[非必要],$scene[非必要])
+#### factory($data[非必要],$scene[非必要])
 - 实例化方法
 ````
 $user = User::factory(['id'=>1],'check');
 ````
 
-####setScene($scene)
+#### setScene($scene)
 - 设置场景
 ````
 $user->serScene('check');
 ````
-####setOperator($operator[默认值],$need[默认值])
+#### setOperator($operator[默认值],$need[默认值])
 - 设置operator标签处理方式
 - $operator可使用一下常量
   - OPERATER_CLOASE        # 默认关闭
@@ -233,20 +233,20 @@ $user->serScene('check');
 $user->setOperator($user::OPERATER_LOAD_OUTPUT);
 ````
 
-####emptyToNull($bool[默认值])
+#### emptyToNull($bool[默认值])
 - 设置属性值赋值时是否将空字符串转化为null
 - 默认true
 ````
 $user->emptyToNull(false);
 ````
 
-####~~toArray($filterNull)~~
+#### ~~toArray($filterNull)~~
 - **请使用outputArray**
 
-####~~toArrayStrict($filterNull)~~
+#### ~~toArrayStrict($filterNull)~~
 - **请使用outputArray**
 
-####outputArray($filter[默认值],$output[默认值],$scene[非必要])
+#### outputArray($filter[默认值],$output[默认值],$scene[非必要])
 - 输出类方法
 - 将public属性整合以array输出返回
 - $filter可使用一下常量进行过滤操作
@@ -261,7 +261,7 @@ $user->emptyToNull(false);
    - OUTPUT_EMPTY   # NULL转空字符串
    - OUTPUT_KEY     # 仅输出KEY字段  
     
-####outputArrayUseMapping($filter[默认值],$output[默认值],$scene[非必要])
+#### outputArrayUseMapping($filter[默认值],$output[默认值],$scene[非必要])
    - 输出类方法
    - 对@mapping标签的属性字段进行转化
    - 将public属性整合以array输出返回
@@ -277,31 +277,31 @@ $user->emptyToNull(false);
       - OUTPUT_EMPTY   # NULL转空字符串
       - OUTPUT_KEY     # 仅输出KEY字段   
 
-####outputArrayByKey($filterNull[默认值],$scene[非必要])
+#### outputArrayByKey($filterNull[默认值],$scene[非必要])
 - 输出类方法
 - 将带有@key标签的public属性整合以array输出返回
 - $filterNull true:过滤null值 false:不过滤 
 
-####create($data,$validate[默认])
+#### create($data,$validate[默认])
 - 映射数据
 
-####validate($data[非必要])
+#### validate($data[非必要])
 - 验证
 
-####hasError($filed[非必要])
+#### hasError($filed[非必要])
 - 判断error区是否有错误
-####getError()
+#### getError()
 - 获取第一条error区信息
-####getErrors()
+#### getErrors()
 - 获取error区所有信息 array
 
-####getCode()
+#### getCode()
 - 获取error区错误码
 
-####getCodes()
+#### getCodes()
 - 获取error区所有错误码 array
 
-####clean($default[默认值])
+#### clean($default[默认值])
 - 对当前结构体初始化
 - $default true：执行@default false：不执行
 
