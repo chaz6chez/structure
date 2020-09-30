@@ -71,6 +71,7 @@ class User extends Struct{
 | <a href="#@skip">@skip</a> | 无 | 跳过验证 |
 | <a href="#@ghost">@ghost</a>| 无 | 跳过输出 |
 | <a href="#@key">@key</a>| 无 | 与toArrayKey()方法配套 |
+| <a href="#@mapping">@mapping</a>| 映射键名 | 与outputArrayUseMapping()方法配套 |
 
 ### <a id="@default">@default</a>
 - 将该属性标记默认模式
