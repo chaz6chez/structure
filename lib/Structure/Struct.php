@@ -409,7 +409,7 @@ class Struct {
         foreach ($fields as $f) {
             $f = $f->getName();
 
-            if (!$mapping = $this->_isMappingField($f, $scene)){
+            if (($mapping = $this->_isMappingField($f, $scene)) === false){
                 continue;
             }
             if ($this->_isGhostField($f)) {
@@ -472,14 +472,14 @@ class Struct {
                     if($k === 'key'){
                         continue;
                     }
-                    if($mapping === true){
+                    if(!$mapping){
                         $_data[] = $v;
                     }else{
                         $_data[$mapping.$k] = $v;
                     }
                 }
             }else{
-                if($mapping === true){
+                if(!$mapping){
                     $_data[$res[0]] = $res[1];
                 }else{
                     $_data[$mapping] = $res[1];
@@ -1011,17 +1011,11 @@ class Struct {
      */
     private function _isMappingField($field,$scene = '') {
         if (isset($this->_validate[$field]['mapping'])) {
-            foreach ($this->_validate[$field]['mapping'] as $v) {
-                if($content = $v['content']){
-                    if($scene === '' and $v['scene'] === ''){
-                        return $content;
-                    }
-                    if($scene !== '' and $v['scene'] == $scene){
-                        return $content;
-                    }
-                }
+            if(isset($this->_validate[$field]['mapping'][$scene])){
+                return $this->_validate[$field]['mapping'][$scene]['content'];
+            }else{
+                return $this->_validate[$field]['mapping']['']['content'];
             }
-            return true;
         }
         return false;
     }

@@ -21,8 +21,8 @@ class User extends Struct{
      * @var
      * @required true|aav
      * @rule string,min:10,max:20|aaaaa
-     * @mapping aa
-     * @mapping[ab] ab
+     * @mapping cc
+     * @mapping[ab] aa
      */
     public $sex;
 
