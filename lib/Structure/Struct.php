@@ -51,8 +51,8 @@ class Struct {
     /**
      * @var string 手术刀正则 [注解]
      */
-#    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator|mapping)(?:\[(\w+)\])?\s+?(.+)/';
     private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator|mapping)(?:\[(\w+)\])?\s+?([^@*\n]+)/';
+    # '/@(default|rule|required|skip|ghost|key|operator|mapping)(?:\[(\w+)\])?\s+?(.+)/';
 
 # -------------------- preg end -----------------
 
@@ -100,7 +100,6 @@ class Struct {
      * Struct constructor.
      * @param null $data
      * @param string $scene
-     * @throws \ReflectionException
      */
     public function __construct($data = null, $scene = '') {
         $this->_scalpel();                       # 加载手术刀
@@ -408,12 +407,11 @@ class Struct {
         $_data = [];
         foreach ($fields as $f) {
             $f = $f->getName();
-
             if (($mapping = $this->_isMappingField($f, $scene)) === false){
                 continue;
             }
             if ($this->_isGhostField($f)) {
-                continue; # 排除鬼魂字段
+                continue;
             }
 
             if (!is_array($this->$f)){
@@ -694,16 +692,10 @@ class Struct {
                         switch ($rn) {
                             # 跳过
                             case 'skip':
-                                $this->_setValidate($rn,$name,$rs);
-                                break;
                             # 鬼魂字段
                             case 'ghost':
-                                $this->_setValidate($rn,$name,$rs);
-                                break;
                             # key字段
                             case 'key':
-                                $this->_setValidate($rn,$name,$rs);
-                                break;
                             # operator字段
                             case 'operator':
                                 $this->_setValidate($rn,$name,$rs);
