@@ -51,8 +51,9 @@ class Struct {
     /**
      * @var string 手术刀正则 [注解]
      */
-#    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator)(?:\[(\w+)\])?\s+?(.+|\s+)/';
-    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator|mapping)(?:\[(\w+)\])?\s+?(.+)/';
+#    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator|mapping)(?:\[(\w+)\])?\s+?(.+)/';
+    private $_scalpelPreg = '/@(default|rule|required|skip|ghost|key|operator|mapping)(?:\[(\w+)\])?\s+?([^@*\n]+)/';
+
 # -------------------- preg end -----------------
 
 # -------------- scalpe info start --------------
@@ -464,6 +465,7 @@ class Struct {
                     $value = $this->$f;
                     break;
             }
+            var_dump($this->_validate);
             $res = $this->_parsingOperator($f,$value);
             if(Filter::factory('assoc')->validate($res)){
                 foreach($res as $k => $v){
