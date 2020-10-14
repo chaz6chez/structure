@@ -1,6 +1,6 @@
 # structure
 
-## v1.0.4
+## v1.0.5
 
 
 一个没什么用的验证器
@@ -185,7 +185,7 @@ $user->setOperator($user::OPERATER_LOAD_OUTPUT)->outputArray();
 - 将该属性标记映射处理
 - 使用outputArrayUseMapping()输出的时候可以将属性字段进行转化输出
 - 支持与@operator共存
-- 多个@mapping仅生效第一个
+- 多个@mapping仅生效最后一个
 ````
     /**
      * @mapping key
@@ -264,6 +264,7 @@ $user->emptyToNull(false);
 #### outputArrayUseMapping($filter[默认值],$output[默认值],$scene[非必要])
    - 输出类方法
    - 对@mapping标签的属性字段进行转化
+   - 当传入的scene未找到时，以非场景的@mapping输出
    - 将public属性整合以array输出返回
    - $filter可使用一下常量进行过滤操作
       - FILTER_NORMAL # 默认不过滤
@@ -360,6 +361,7 @@ $user->emptyToNull(false);
 ## 补充
 
 1. 所有验证标签均可使用[XXX]场景化区分.
-2. Filter类可继承使用，内置的注册方法可以添加自定义注册类，更多方法自己摸索.
+2. 重复非场景标签/重复场景标签会覆盖生效，但场景与非场景不会交叉覆盖.
+3. Filter类可继承使用，内置的注册方法可以添加自定义注册类，更多方法自己摸索.
 
 
