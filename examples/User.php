@@ -19,16 +19,12 @@ class User extends Struct{
 
     /**
      * @var
-     * @mapping ass
-     * @required true
+     * @required true|aav
      * @rule string,min:10,max:20|aaaaa
+     * @mapping cc
+     * @mapping[ab] aa
      */
     public $sex;
 
-    /**
-     * @var
-     * @mapping key
-     * @operator true
-     */
     public $age;
 }
