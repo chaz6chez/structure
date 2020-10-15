@@ -37,10 +37,17 @@ function is_assoc($array){
     return boolval(array_keys($array) !== range(0, count($array) - 1));
 }
 
-$support = \Example\User::factory();
-$support->age = '123[>]|456[<]';
-$support->sex = '1';
-//var_dump($support);
-echo json_encode(
-    $support->outputArrayUseMapping($support::FILTER_STRICT)
-);
+try {
+    $support = \Example\User::factory();
+    $support = \Example\User2::factory();
+}catch(Exception $exception){
+    echo $exception->getMessage();
+}
+
+
+//$support->age = '123[>]|456[<]';
+//$support->sex = '1';
+////var_dump($support);
+//echo json_encode(
+//    $support->outputArrayUseMapping($support::FILTER_STRICT)
+//);

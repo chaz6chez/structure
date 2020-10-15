@@ -8,20 +8,16 @@ namespace Example;
 
 use Structure\Struct;
 
-class User extends Struct{
+class User2 extends Struct{
     protected $register = [];
-
-    public $id;
 
     /**
      * @vars
-     * @skip
+     * @skip[aa]
      * @mapping
      * @rule string,max:10|ssss
      * @rule[abc] string,max:10|ssxx
      * @rule[abc] string,max:10|sscxx
      */
-    public $name;
     public $sex;
-    public $age;
 }
