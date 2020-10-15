@@ -82,7 +82,7 @@ class Struct {
 
 
     protected static $_static_filters = [
-        'default'  => 'Structure\Scalpel\DefaultScalpel',
+        'default'  => 'Structure\Scalpel\Defaults',
         'required' => 'Structure\Scalpel\Required',
         'rule'     => 'Structure\Scalpel\Rule',
         'skip'     => 'Structure\Scalpel\Skip',
@@ -168,7 +168,7 @@ class Struct {
             foreach($registers as $tag => $class){
                 if (
                     !array_key_exists($tag, $this->_register) and
-                    is_subclass_of($class, __CLASS__)
+                    is_subclass_of($class, ScalpelInterface::class)
                 ){
                     $this->_register[$tag] = $class;
                 }

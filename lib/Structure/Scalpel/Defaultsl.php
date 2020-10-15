@@ -8,7 +8,7 @@ namespace Structure\Scalpel;
 
 use Structure\Format;
 
-class DefaultScalpel implements ScalpelInterface {
+class Defaults implements ScalpelInterface {
     /**
      * @var static
      */
