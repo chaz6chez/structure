@@ -7,6 +7,7 @@
 namespace Structure\Scalpel;
 
 use Structure\Format;
+use Structure\Struct;
 
 class Mapping implements ScalpelInterface {
     /**
@@ -28,10 +29,10 @@ class Mapping implements ScalpelInterface {
      * @param $rn
      * @param $rs
      * @param $rc
+     * @param Struct $struct
      * @return Format
      */
-    public function handle($rn, $rs, $rc): Format {
-        // todo
+    public function handle($rn, $rs, $rc, Struct &$struct): Format {
         $format = Format::instance();
         $format->_content = $rc;
         $format->_scene = $rs;

@@ -7,6 +7,7 @@
 namespace Structure\Scalpel;
 
 use Structure\Format;
+use Structure\Struct;
 
 class Defaults implements ScalpelInterface {
     /**
@@ -28,13 +29,60 @@ class Defaults implements ScalpelInterface {
      * @param $rn
      * @param $rs
      * @param $rc
+     * @param Struct $struct
      * @return Format
      */
-    public function handle($rn, $rs, $rc): Format {
-        // todo
+    public function handle($rn, $rs, $rc, Struct &$struct): Format {
+        $rc = explode(':', $rc, 2);
+        $t = trim($rc[0]); # 类型:int,float,null,string
+        $v = isset($rc[1]) ? trim($rc[1]) : null; # 值
+
+        if(!is_null($v)) {
+            switch($t) {
+                case 'int':
+                    $v = intval($v);
+                    break;
+                case 'float':
+                    $v = floatval($v);
+                    break;
+                case 'null':
+                    $v = null;
+                    break;
+                case 'func':
+                    $v = function_exists($v) ? call_user_func($v) : '';
+                    break;
+                case 'method':
+                    $v = is_callable([$struct, $v]) ? call_user_func_array([$struct, $v], []) : '';
+                    break;
+                case 'array':
+                    $v = json_decode($v, true);
+                    break;
+                case 'bool':
+                    $v = boolval($v === 'true');
+                    break;
+                default:
+                    $v = strval($v);
+                    break;
+            }
+        }
         $format = Format::instance();
-        $format->_content = $rc;
-        $format->_scene = $rs;
+        $format->_content = $v;
+        $format->_scene   = $rs;
         return $format;
     }
+
+    public function validate($tagInfo): Format {
+        return Format::instance();// TODO: Implement validate() method.
+    }
+
+    //    public function validate(): Format {
+//        $error = explode(':',$error);
+//        if(count($error) > 1){
+//            $this->_errors[$field] = $error[0];
+//            $this->_codes[$field] = isset($error[1]) ? $error[1] : '500';
+//        }else{
+//            $this->_errors[$field] = $error;
+//            $this->_codes[$field] = '0';
+//        }
+//    }
 }

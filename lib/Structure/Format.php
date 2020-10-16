@@ -6,6 +6,7 @@ final class Format {
     public $_error   = '';
     public $_code    = '';
     public $_content = '';
+    public $_type    = '';
 
     /**
      * @var \ReflectionProperty[]
@@ -15,6 +16,7 @@ final class Format {
      * @var self
      */
     private static $_instance;
+    private $_command;
 
     /**
      * Format constructor.
@@ -49,6 +51,17 @@ final class Format {
         return self::$_instance = new self($data);
     }
 
+    public function setCommand(int $command){
+        $this->_command = $command;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCommand() : int{
+        return $this->_command;
+    }
+
     /**
      * clean
      */
@@ -57,11 +70,13 @@ final class Format {
         $this->_code    = '';
         $this->_content = '';
         $this->_error   = '';
+        $this->_type    = '';
     }
 
     /**
      * Set data
      * @param array $data
+     * @return $this
      */
     public function set(array $data){
         if($data){
@@ -69,7 +84,9 @@ final class Format {
             $this->_code    = isset($data['_code']) ? $data['_code'] : '';
             $this->_content = isset($data['_content']) ? $data['_content'] : '';
             $this->_error   = isset($data['_error']) ? $data['_error'] : '';
+            $this->_type    = isset($data['_type']) ? $data['_type'] : '';
         }
+        return $this;
     }
 
     /**

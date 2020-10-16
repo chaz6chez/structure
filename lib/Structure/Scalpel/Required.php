@@ -7,6 +7,7 @@
 namespace Structure\Scalpel;
 
 use Structure\Format;
+use Structure\Struct;
 
 class Required implements ScalpelInterface {
     /**
@@ -28,13 +29,15 @@ class Required implements ScalpelInterface {
      * @param $rn
      * @param $rs
      * @param $rc
+     * @param Struct $struct
      * @return Format
      */
-    public function handle($rn, $rs, $rc): Format {
-        //todo
+    public function handle($rn, $rs, $rc, Struct &$struct): Format {
+        $rc = explode('|', $rc);
         $format = Format::instance();
-        $format->_content = $rc;
-        $format->_scene = $rs;
+        $format->_content = true;
+        $format->_scene   = $rs;
+        $format->_error   = isset($rc[1]) ? $rc[1] : "{$struct->getLastField()->getName()} cannot empty";
         return $format;
     }
 }

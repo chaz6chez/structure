@@ -15,13 +15,12 @@ class User extends Struct{
 
     /**
      * @vars
-     * @skip
-     * @mapping
-     * @rule string,max:10|ssss
-     * @rule[abc] string,max:10|ssxx
-     * @rule[abc] string,max:10|sscxx
+     * @default method:_lock
      */
     public $name;
+    public function _lock(){
+        return 123;
+    }
     public $sex;
     public $age;
 }

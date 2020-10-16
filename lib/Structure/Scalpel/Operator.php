@@ -9,7 +9,7 @@ namespace Structure\Scalpel;
 use Structure\Format;
 use Structure\Struct;
 
-class Skip implements ScalpelInterface {
+class Operator implements ScalpelInterface {
     /**
      * @var static
      */

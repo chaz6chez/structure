@@ -2,6 +2,7 @@
 namespace Structure\Scalpel;
 
 use Structure\Format;
+use Structure\Struct;
 
 interface ScalpelInterface {
 
@@ -12,11 +13,17 @@ interface ScalpelInterface {
     public static function instance() : self;
 
     /**
-     *
      * @param $rn
      * @param $rs
      * @param $rc
+     * @param Struct $struct
      * @return Format
      */
-    public function handle($rn, $rs, $rc) : Format ;
+    public function handle($rn, $rs, $rc, Struct &$struct) : Format ;
+
+    /**
+     * @param $tagInfo
+     * @return Format
+     */
+    public function validate($tagInfo) : Format;
 }
