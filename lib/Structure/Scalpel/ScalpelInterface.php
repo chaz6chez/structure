@@ -22,8 +22,10 @@ interface ScalpelInterface {
     public function handle($rn, $rs, $rc, Struct &$struct) : Format ;
 
     /**
-     * @param $tagInfo
+     * @param $formatInfo
+     * @param array $data
+     * @param Struct $struct
      * @return Format
      */
-    public function validate($tagInfo) : Format;
+    public function validate($formatInfo, array $data, Struct &$struct) : Format;
 }

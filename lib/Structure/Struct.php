@@ -259,6 +259,24 @@ class Struct {
     }
 
     /**
+     * Is tag
+     * @param string $tag
+     * @param string $field
+     * @return bool
+     */
+    private function _isTagField(string $tag, string $field) {
+        if (isset($this->_scalpel_result[$field][$tag])) {
+            if(isset($this->_scalpel_result[$field][$tag][''])){
+                return true;
+            }
+            if(isset($this->_scalpel_result[$field][$tag][$this->_scene])){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Factory
      * @param array $data
      * @param string $scene
@@ -334,63 +352,87 @@ class Struct {
      */
     public function validate(array $data = []) {
         $this->_errors = [];
-        if ($this->_scalpel_result) {
-            $data = $data ? $data : $this->outputArray();
-            $passed = true;
-            $registers = $this->getRegister();
-            foreach ($this->_scalpel_result as $field => $content) {
-                foreach($content as $tag => $value){
-                    if(!array_key_exists($tag, $registers)){
-                        continue;
+        if (!$this->_scalpel_result) {
+            return true;
+        }
+        $data = $data ? $data : $this->outputArray();
+        $passed = true;
+        $registers = $this->getRegister();
+        foreach ($this->_scalpel_result as $field => $content) {
+            if($this->_isTagField('skip', $field)){
+                continue;
+            }
+            foreach($content as $tag => $value){
+                if(!array_key_exists($tag, $registers)){
+                    continue;
+                }
+                [$class,$validate] = $registers[$tag];
+                if(!$validate){
+                    continue;
+                }
+                if(
+                    is_subclass_of($class,ScalpelInterface::class) and
+                    class_exists($class)
+                ){
+                    if(isset($value[''])){
+                        $formatInfo = $value[''];
+                    }else if(isset($value[$this->_scene])){
+                        $formatInfo = $value[$this->_scene];
+                    }else{
+                        $formatInfo = [];
                     }
-                    [$class,$validate] = $registers[$tag];
-                    if(!$validate){
-                        continue;
-                    }
-                    if(
-                        is_subclass_of($class,ScalpelInterface::class) and
-                        class_exists($class)
-                    ){
-                        $format = $class::instance()->validate($value);
+                    if($formatInfo){
+                        $format = $class::instance()->validate($formatInfo,$data,$this);
                         $this->_addError($field, $format->_error, $format->_code);
                         if($command = $format->getCommand()) continue 2;
                     }
                 }
             }
+
+            # 必填值验证
+            if (isset($v['required'])) {
+                foreach ($v['required'] as $req) {
+                    if ($this->_checkScene($req['scene'])) {
+                        if (
+                            !isset($data[$f]) or
+                            $data[$f] === ''
+                        ) {
+                            $this->_addError($f, $req['error']);
+                            $passed = false;
+                            continue 2; # 无值不验证
+                        }
+                    }
+                }
+            }
+            # 规则验证
+            if (isset($data[$f]) && $data[$f] !== '' && isset($v['rule'])) {
+                foreach ($v['rule'] as $r) {
+                    if ($this->_checkScene($r['scene'])) {
+                        $validator = $r['content'];
+
+                        # 创建错误(校验过程)
+                        $check = true;
+                        switch (true){
+                            case $this->_rck == 'func':
+                                $check = call_user_func($validator, $data[$f]);
+                                break;
+                            case $this->_rck == 'method':
+                                $check = call_user_func($validator, $data[$f], $f, $data);
+                                break;
+                            case $validator instanceof Filter:
+                                $check = $validator->validate($data[$f]);
+                                break;
+                        }
+                        if(!$check){
+                            $this->_addError($f, $r['error']);
+                            $passed = false;
+                        }
+                    }
+                }
+            }
         }
-        return true;
-    }
 
-    /**
-     * 获取第一条错误
-     * @return string|null
-     */
-    public function getError() {
-        return $this->_errors ? array_values($this->_errors)[0] : null;
-    }
-
-    /**
-     * 获取第一条错误码
-     * @return string|null
-     */
-    public function getCode() {
-        return $this->_codes ? array_values($this->_codes)[0] : null;
-    }
-
-    /**
-     * 获取全部错误
-     * @return array
-     */
-    public function getErrors() {
-        return $this->_errors ? $this->_errors : [];
-    }
-
-    /**
-     * 获取全部错误码
-     * @return array
-     */
-    public function getCodes() {
-        return $this->_codes ? $this->_codes : [];
+        return $passed;
     }
 
 
@@ -418,6 +460,15 @@ class Struct {
         return $name;
     }
 
+    /**
+     * 设置empty to null
+     * @param bool $bool
+     * @return $this
+     */
+    public function emptyToNull(bool $bool){
+        $this->_empty_to_null = $bool;
+        return $this;
+    }
 
     /**
      * 设置过滤类型
@@ -680,6 +731,38 @@ class Struct {
     }
 
     /**
+     * 获取第一条错误
+     * @return string|null
+     */
+    public function getError() {
+        return $this->_errors ? array_values($this->_errors)[0] : null;
+    }
+
+    /**
+     * 获取第一条错误码
+     * @return string|null
+     */
+    public function getCode() {
+        return $this->_codes ? array_values($this->_codes)[0] : null;
+    }
+
+    /**
+     * 获取全部错误
+     * @return array
+     */
+    public function getErrors() {
+        return $this->_errors ? $this->_errors : [];
+    }
+
+    /**
+     * 获取全部错误码
+     * @return array
+     */
+    public function getCodes() {
+        return $this->_codes ? $this->_codes : [];
+    }
+
+    /**
      * 过滤正则辅助
      * @param $value
      * @return mixed
@@ -778,22 +861,6 @@ class Struct {
     private function _isGhostField($field) {
         if (isset($this->_validate[$field]['ghost'])) {
             foreach ($this->_validate[$field]['ghost'] as $v) {
-                if ($this->_checkScene($v['scene'])) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 是否为跳过的字段
-     * @param $field
-     * @return bool
-     */
-    private function _isSkipField($field) {
-        if (isset($this->_validate[$field]['skip'])) {
-            foreach ($this->_validate[$field]['skip'] as $v) {
                 if ($this->_checkScene($v['scene'])) {
                     return true;
                 }

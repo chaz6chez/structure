@@ -40,4 +40,16 @@ class Required implements ScalpelInterface {
         $format->_error   = isset($rc[1]) ? $rc[1] : "{$struct->getLastField()->getName()} cannot empty";
         return $format;
     }
+
+    public function validate($formatInfo, array $data, Struct &$struct): Format {
+
+    }
+    //    public function validate($Info,): Format {
+//        $format = Format::instance($tagInfo);
+//
+//
+//        $format->_error
+//        $format->_code
+//        return $format;
+//    }
 }
