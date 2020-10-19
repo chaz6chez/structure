@@ -64,7 +64,28 @@ class Rule implements ScalpelInterface {
         return $format;
     }
 
+    /**
+     * @param string $field
+     * @param Struct $struct
+     * @return bool
+     */
     public function validate(string $field, Struct &$struct): bool {
-        return true;
+        $format = $struct->getTagFormat('rule', $field);
+        $check = false;
+        $validator = $format->_content;
+        switch (true) {
+            case $format->_type == 'func':
+                $check = call_user_func($validator, $struct->$field);
+                break;
+            case $format->_type == 'method':
+                $check = call_user_func($validator, $struct->$field, $field, $struct->outputArray());
+                break;
+            case $validator instanceof Filter:
+                $check = $validator->validate($struct->$field);
+                break;
+            default:
+                break;
+        }
+        return $check;
     }
 }

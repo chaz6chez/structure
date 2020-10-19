@@ -39,7 +39,8 @@ function is_assoc($array){
 
 try {
     $support = \Example\User::factory();
-    var_dump($support->c);
+
+    var_dump(property_exists($support,'c'));
 
 }catch(Exception $exception){
     echo $exception->getMessage();

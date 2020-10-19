@@ -41,7 +41,19 @@ class Required implements ScalpelInterface {
         return $format;
     }
 
+    /**
+     * @param string $field
+     * @param Struct $struct
+     * @return bool
+     */
     public function validate(string $field, Struct &$struct): bool {
-
+        if(
+            property_exists($struct, $field) or
+            $struct->$field === '' or
+            $struct->$field === null
+        ){
+            return false;
+        }
+        return true;
     }
 }
