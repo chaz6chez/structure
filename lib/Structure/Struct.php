@@ -52,14 +52,14 @@ class Struct {
 
 
     protected static $_static_filters = [
-        'required' => ['Structure\Scalpel\Required',true],
-        'default'  => ['Structure\Scalpel\Defaults',false],
-        'rule'     => ['Structure\Scalpel\Rule',true],
-        'skip'     => ['Structure\Scalpel\Skip',false],
-        'ghost'    => ['Structure\Scalpel\Ghost',false],
-        'key'      => ['Structure\Scalpel\Key',false],
-        'operator' => ['Structure\Scalpel\Operator',false],
-        'mapping'  => ['Structure\Scalpel\Mapping',false],
+        'required' => 'Structure\Scalpel\Required',
+        'default'  => 'Structure\Scalpel\Defaults',
+        'rule'     => 'Structure\Scalpel\Rule',
+        'skip'     => 'Structure\Scalpel\Skip',
+        'ghost'    => 'Structure\Scalpel\Ghost',
+        'key'      => 'Structure\Scalpel\Key',
+        'operator' => 'Structure\Scalpel\Operator',
+        'mapping'  => 'Structure\Scalpel\Mapping',
     ];
 
     /**
@@ -150,10 +150,9 @@ class Struct {
         }
         if($registers){
             foreach($registers as $tag => $register){
-                [$class,$v] = $register;
                 if (
                     !array_key_exists($tag, $this->_register) and
-                    is_subclass_of($class, ScalpelInterface::class)
+                    is_subclass_of($register, ScalpelInterface::class)
                 ){
                     $this->_register[$tag] = $register;
                 }
@@ -224,10 +223,9 @@ class Struct {
                     $rn = trim($matches[1][$i]); # 指令名称
                     $rs = trim($matches[2][$i]); # 指令场景
                     $rc = trim($matches[3][$i]); # 规则内容
-                    if(!$register = $this->getRegister($rn)){
+                    if(!$class = $this->getRegister($rn)){
                         continue;
                     }
-                    [$class,$validate] = $register;
                     if(
                         is_subclass_of($class,ScalpelInterface::class) and
                         class_exists($class)
@@ -262,11 +260,12 @@ class Struct {
      * Is tag
      * @param string $tag
      * @param string $field
-     * @return bool
+     * @param bool $cover true or false, the default non-scene tag will cover the scene tag
+     * @return bool Non-scene tags > scene tags , Non-scene tags are effective in any scene
      */
-    private function _isTagField(string $tag, string $field) {
+    private function _isTagField(string $tag, string $field, bool $cover = true) {
         if (isset($this->_scalpel_result[$field][$tag])) {
-            if(isset($this->_scalpel_result[$field][$tag][''])){
+            if(isset($this->_scalpel_result[$field][$tag]['']) and $cover){
                 return true;
             }
             if(isset($this->_scalpel_result[$field][$tag][$this->_scene])){
@@ -274,6 +273,43 @@ class Struct {
             }
         }
         return false;
+    }
+
+    /**
+     * @param string $tag
+     * @param string $field
+     * @param bool true or false, the default non-scene tag will cover the scene tag
+     * @return Format Non-scene tags > scene tags , Non-scene tags are effective in any scene
+     */
+    private function _getTagError(string $tag, string $field, bool $cover = true){
+
+        if (isset($this->_scalpel_result[$field][$tag])) {
+            if(isset($this->_scalpel_result[$field][$tag]['']) and $cover){
+
+                return Format::instance()->set($this->_scalpel_result[$field][$tag]['']);
+            }
+            if(isset($this->_scalpel_result[$field][$tag][$this->_scene])){
+                return Format::instance()->set($this->_scalpel_result[$field][$tag][$this->_scene]);
+            }
+        }
+        return Format::instance();
+    }
+
+    /**
+     * Use Tag`s Validate
+     * @param string $tag
+     * @param string $field
+     * @return bool
+     */
+    private function _useTagValidate(string $tag, string $field) : bool {
+        if(
+            $class = $this->getRegister($tag) and
+            is_subclass_of($class,ScalpelInterface::class) and
+            class_exists($class)
+        ){
+            return $class::instance()->validate($field, $this);
+        }
+        return true;
     }
 
     /**
@@ -320,7 +356,7 @@ class Struct {
                 }
             }
             if ($validate) {
-                if (!$this->validate($_data)) {
+                if (!$this->validate()) {
                     return false;
                 }
             }
@@ -347,89 +383,60 @@ class Struct {
 
     /**
      * 验证器
-     * @param array|null $data
      * @return bool
      */
-    public function validate(array $data = []) {
+    public function validate() {
         $this->_errors = [];
         if (!$this->_scalpel_result) {
             return true;
         }
-        $data = $data ? $data : $this->outputArray();
+        $data = $this->outputArray();
         $passed = true;
         $registers = $this->getRegister();
         foreach ($this->_scalpel_result as $field => $content) {
+            # @skip
             if($this->_isTagField('skip', $field)){
                 continue;
             }
-            foreach($content as $tag => $value){
-                if(!array_key_exists($tag, $registers)){
-                    continue;
-                }
-                [$class,$validate] = $registers[$tag];
-                if(!$validate){
-                    continue;
-                }
-                if(
-                    is_subclass_of($class,ScalpelInterface::class) and
-                    class_exists($class)
-                ){
-                    if(isset($value[''])){
-                        $formatInfo = $value[''];
-                    }else if(isset($value[$this->_scene])){
-                        $formatInfo = $value[$this->_scene];
-                    }else{
-                        $formatInfo = [];
-                    }
-                    if($formatInfo){
-                        $format = $class::instance()->validate($formatInfo,$data,$this);
-                        $this->_addError($field, $format->_error, $format->_code);
-                        if($command = $format->getCommand()) continue 2;
-                    }
-                }
+            # @required
+            if(!$this->_useTagValidate('required',$field)){
+                $support = $this->_getTagError('required',$field);
+                $this->_addError($field, $support->_error, $support->_code);
+                continue;
             }
-
-            # 必填值验证
-            if (isset($v['required'])) {
-                foreach ($v['required'] as $req) {
-                    if ($this->_checkScene($req['scene'])) {
-                        if (
-                            !isset($data[$f]) or
-                            $data[$f] === ''
-                        ) {
-                            $this->_addError($f, $req['error']);
-                            $passed = false;
-                            continue 2; # 无值不验证
-                        }
-                    }
-                }
+            # @rule
+            if(!$this->_useTagValidate('rule',$field)){
+                $support = $this->_getTagError('rule',$field);
+                $this->_addError($field, $support->_error, $support->_code);
+                continue;
             }
-            # 规则验证
-            if (isset($data[$f]) && $data[$f] !== '' && isset($v['rule'])) {
-                foreach ($v['rule'] as $r) {
-                    if ($this->_checkScene($r['scene'])) {
-                        $validator = $r['content'];
-
-                        # 创建错误(校验过程)
-                        $check = true;
-                        switch (true){
-                            case $this->_rck == 'func':
-                                $check = call_user_func($validator, $data[$f]);
-                                break;
-                            case $this->_rck == 'method':
-                                $check = call_user_func($validator, $data[$f], $f, $data);
-                                break;
-                            case $validator instanceof Filter:
-                                $check = $validator->validate($data[$f]);
-                                break;
-                        }
-                        if(!$check){
-                            $this->_addError($f, $r['error']);
-                            $passed = false;
-                        }
-                    }
-                }
-            }
+            
+//            # 规则验证
+//            if (isset($data[$f]) && $data[$f] !== '' && isset($v['rule'])) {
+//                foreach ($v['rule'] as $r) {
+//                    if ($this->_checkScene($r['scene'])) {
+//                        $validator = $r['content'];
+//
+//                        # 创建错误(校验过程)
+//                        $check = true;
+//                        switch (true){
+//                            case $this->_rck == 'func':
+//                                $check = call_user_func($validator, $data[$f]);
+//                                break;
+//                            case $this->_rck == 'method':
+//                                $check = call_user_func($validator, $data[$f], $f, $data);
+//                                break;
+//                            case $validator instanceof Filter:
+//                                $check = $validator->validate($data[$f]);
+//                                break;
+//                        }
+//                        if(!$check){
+//                            $this->_addError($f, $r['error']);
+//                            $passed = false;
+//                        }
+//                    }
+//                }
+//            }
         }
 
         return $passed;
@@ -544,14 +551,14 @@ class Struct {
      * @param string $scene
      * @return array
      */
-    public function outputArray($filter = self::FILTER_NORMAL,$output = self::OUTPUT_NORMAL, $scene = ''){
+    final public function outputArray($filter = self::FILTER_NORMAL,$output = self::OUTPUT_NORMAL, $scene = ''){
         $fields = $this->_getFields();
         $_data = [];
         foreach ($fields as $f) {
             $f = $f->getName();
 
-            if ($this->_isGhostField($f)) {
-                continue; # 排除鬼魂字段
+            if($this->_isTagField('ghost',$f)){
+                continue;
             }
 
             if (!is_array($this->$f)){

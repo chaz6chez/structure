@@ -39,8 +39,8 @@ function is_assoc($array){
 
 try {
     $support = \Example\User::factory();
-//    $support = \Example\User2::factory();
-    var_dump($support->getRco());
+    var_dump($support->c);
+
 }catch(Exception $exception){
     echo $exception->getMessage();
 }

@@ -63,4 +63,8 @@ class Rule implements ScalpelInterface {
         }
         return $format;
     }
+
+    public function validate(string $field, Struct &$struct): bool {
+        return true;
+    }
 }

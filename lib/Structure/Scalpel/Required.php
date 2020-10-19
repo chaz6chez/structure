@@ -41,15 +41,7 @@ class Required implements ScalpelInterface {
         return $format;
     }
 
-    public function validate($formatInfo, array $data, Struct &$struct): Format {
+    public function validate(string $field, Struct &$struct): bool {
 
     }
-    //    public function validate($Info,): Format {
-//        $format = Format::instance($tagInfo);
-//
-//
-//        $format->_error
-//        $format->_code
-//        return $format;
-//    }
 }

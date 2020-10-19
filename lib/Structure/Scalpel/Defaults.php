@@ -71,18 +71,7 @@ class Defaults implements ScalpelInterface {
         return $format;
     }
 
-    public function validate($tagInfo): Format {
-        return Format::instance();// TODO: Implement validate() method.
+    public function validate(string $field, Struct &$struct): bool {
+        return true;
     }
-
-    //    public function validate(): Format {
-//        $error = explode(':',$error);
-//        if(count($error) > 1){
-//            $this->_errors[$field] = $error[0];
-//            $this->_codes[$field] = isset($error[1]) ? $error[1] : '500';
-//        }else{
-//            $this->_errors[$field] = $error;
-//            $this->_codes[$field] = '0';
-//        }
-//    }
 }

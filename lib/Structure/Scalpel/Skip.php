@@ -38,4 +38,8 @@ class Skip implements ScalpelInterface {
         $format->_scene = $rs;
         return $format;
     }
+
+    public function validate(string $field, Struct &$struct): bool {
+        return true;
+    }
 }
