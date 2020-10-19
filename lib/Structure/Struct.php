@@ -286,7 +286,7 @@ class Struct {
      * Factory
      * @param array $data
      * @param string $scene
-     * @return mixed
+     * @return static
      */
     public static function factory(array $data = [],string $scene = '') {
         $cls = get_called_class();
