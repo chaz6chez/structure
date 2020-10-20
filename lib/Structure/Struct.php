@@ -217,6 +217,7 @@ class Struct {
         }
         return true;
     }
+
     /**
      * 过滤正则辅助
      * @param $value
@@ -292,7 +293,8 @@ class Struct {
     }
 
     /**
-     * 检查是适用当前场景
+     * Check the current scene
+     *
      * @param $scene
      * @return bool
      */
@@ -328,6 +330,7 @@ class Struct {
 
     /**
      * Get fields type
+     *
      * @return int
      */
     public static function getFieldsType(){
@@ -335,6 +338,8 @@ class Struct {
     }
 
     /**
+     * Get Registers
+     *
      * @param string $field
      * @return ScalpelInterface[]|ScalpelInterface
      */
@@ -347,6 +352,7 @@ class Struct {
 
     /**
      * Factory
+     *
      * @param array $data
      * @param string $scene
      * @return static
@@ -358,6 +364,7 @@ class Struct {
 
     /**
      * Set Struct scene
+     *
      * @param string $scene
      * @return $this
      */
@@ -368,6 +375,7 @@ class Struct {
 
     /**
      * Is tag
+     *
      * @param string $tag
      * @param string $field
      * @param bool $cover true or false, the default non-scene tag will cover the scene tag
@@ -417,7 +425,8 @@ class Struct {
     }
 
     /**
-     * clean
+     * Clean
+     *
      * @param bool $default
      * @return bool
      */
@@ -437,6 +446,7 @@ class Struct {
     }
 
     /**
+     * Get the Format of the Tag
      * @param string $tag
      * @param string $field
      * @param bool true or false, the default non-scene tag will cover the scene tag
@@ -589,8 +599,8 @@ class Struct {
     }
 
     /**
-     * 设置过滤类型
-     * @param int $operator OPERATOR_开头的常量进行设置
+     * Set the operator
+     * @param int $operator Constant starting with OPERATOR_
      * @return $this
      */
     public function setOperator(int $operator = self::OPERATOR_CLOSE){
@@ -599,6 +609,7 @@ class Struct {
     }
 
     /**
+     * Get the operator
      * @return int
      */
     public function getOperator(){
@@ -606,6 +617,7 @@ class Struct {
     }
 
     /**
+     * Get the variable name
      * @param $var
      * @param Struct $struct
      * @return false|int|string
@@ -619,7 +631,7 @@ class Struct {
     }
 
     /**
-     * 确认错误
+     * Confirm whether there are errors
      * @param null $filed
      * @return bool|mixed
      */
@@ -632,7 +644,7 @@ class Struct {
     }
 
     /**
-     * 获取第一条错误
+     * Get the first error content
      * @return string|null
      */
     public function getError() {
@@ -640,7 +652,7 @@ class Struct {
     }
 
     /**
-     * 获取第一条错误码
+     * Get the first error code
      * @return string|null
      */
     public function getCode() {
@@ -648,7 +660,7 @@ class Struct {
     }
 
     /**
-     * 获取全部错误
+     * Get all error content
      * @return array
      */
     public function getErrors() {
@@ -656,25 +668,33 @@ class Struct {
     }
 
     /**
-     * 获取全部错误码
+     * Get all error code
      * @return array
      */
     public function getCodes() {
         return $this->_codes ? $this->_codes : [];
     }
 
+    /**
+     * Get scalpel results
+     * @return array
+     */
     public function getResult(){
         return $this->_scalpel_result;
     }
 
+    /**
+     * Get the last executed field
+     * @return \ReflectionProperty
+     */
     final public function getLastField(){
         return $this->_field;
     }
 
     /**
-     * 数组输出 [仅输出@key]
+     * Output @key field as an array
      * @param bool $filterNull
-     * @param string $scene 场景
+     * @param string $scene
      * @return array
      */
     public function outputArrayByKey($filterNull = false, $scene = ''){
@@ -713,7 +733,7 @@ class Struct {
     }
 
     /**
-     * 数组映射输出
+     * Output @mapping field as an array
      * @param int $filter
      * @param int $output
      * @param string $scene
@@ -808,5 +828,4 @@ class Struct {
         $this->setOperator();
         return $_data;
     }
-
 }
