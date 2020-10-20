@@ -9,7 +9,9 @@ namespace Example;
 use Structure\Struct;
 
 class User extends Struct{
-    protected $register = [];
+    protected $register = [
+        'example' => 'Example/ExampleScalpel'
+    ];
 
     public $id;
 

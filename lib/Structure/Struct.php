@@ -9,37 +9,22 @@ namespace Structure;
 use Structure\Scalpel\ScalpelInterface;
 
 class Struct {
-    # 数值过滤
+    # OPERATOR_
     const OPERATOR_CLOSE         = 0; # 默认关闭
     const OPERATOR_LOAD_OUTPUT   = 1; # 装载输出
     const OPERATOR_FILTER_OUTPUT = 2; # 过滤输出
-    # 参数过滤 []
+    # FILTER_
     const FILTER_NORMAL = 10; # 默认不过滤
     const FILTER_NULL   = 11; # 过滤NULL
     const FILTER_EMPTY  = 12; # 过滤空字符串
     const FILTER_STRICT = 13; # 严格过滤
     const FILTER_KEY    = 14; # 仅对@key字段过滤
-    # 输出转换
+    # OUTPUT_
     const OUTPUT_NORMAL  = 110; # 默认输出
     const OUTPUT_NULL    = 111; # 空字符串转NULL
     const OUTPUT_EMPTY   = 112; # NULL转空字符串
     const OUTPUT_KEY     = 113; # 输出@key字段
     const OUTPUT_MAPPING = 114; # 输出@mapping字段
-
-
-    /**
-     * @var int 特殊值的处理
-     */
-    protected $_operator        = self::OPERATOR_CLOSE;
-    /**
-     * @var bool 默认对带 @operator标签的进行转化
-     */
-    protected $_operatorKeyNeed = true;
-    /**
-     * @var string 操作者正则 [用于特殊赋值的过滤和操作] [column仅做了包含性判断]
-     */
-    private $_operatorPreg = '/(?<column>[\s\S]*(?=\[(?<operator>\+|\-|\*|\/|\>\=?|\<\=?|\!|\<\>|\>\<|\!?~)\]$)|[\s\S]*)/';
-
 
     protected static $_static_filters = [
         'required' => 'Structure\Scalpel\Required',
@@ -66,67 +51,50 @@ class Struct {
      */
     private static $_instance;
 
+    private $_operatorPreg = '/(?<column>[\s\S]*(?=\[(?<operator>\+|\-|\*|\/|\>\=?|\<\=?|\!|\<\>|\>\<|\!?~)\]$)|[\s\S]*)/';
     private $_scalpel_preg = '/@(\w*)(?:\[(\w+)\])?\s+?([^@\n*]+)/';
     private $_scalpel_result = [];
-
+    private $_operator = self::OPERATOR_CLOSE;
     private $_errors = [];
     private $_codes = [];
     private $_scene = '';
     private $_register = [];
+    private $_temps = [];
 
     protected $register = [];
 
-    /**
-     * Global register tag
-     * @param $name
-     * @param $class
-     * @param $validate
-     */
-    public static function register($name, $class, $validate) {
-        if (array_key_exists($name, self::$_static_filters)){
-            throw new \InvalidArgumentException("@{$name} already", -1);
-        }
-        if (!is_subclass_of($class, __CLASS__)) {
-            throw new \InvalidArgumentException("Invalid Scalpel @{$name} -> {$class}",-2);
-        }
-        self::$_static_filters[$name] = [$class,$validate];
+    public function __set($name, $value) {
+        $this->_temps[$name] = $value;
+    }
+    public function __get($name) {
+        return isset($this->_temps[$name]) ? $this->_temps[$name] : null;
     }
 
     /**
-     * Set fields type
-     *  This is a global setting and will affect all [Struct]
-     *
-     * @param int $reflectionPropertyConst
+     * @return array
      */
-    public static function setFieldsType(int $reflectionPropertyConst){
-        self::$_fields_type = $reflectionPropertyConst;
+    public function getTemps(){
+        return $this->_temps;
     }
 
     /**
-     * Get fields type
-     * @return int
+     * @param array $temps
      */
-    public static function getFieldsType(){
-        return self::$_fields_type;
+    public function setTemps(array $temps = []){
+        $this->_temps = [];
     }
 
     /**
-     * @param string $field
-     * @return ScalpelInterface[]|ScalpelInterface
+     * Struct constructor.
+     * @param array $data
+     * @param string $scene
      */
-    final public function getRegister(string $field = ''){
-        if($field){
-            return isset($this->_register[$field]) ? $this->_register[$field] : [];
-        }
-        return $this->_register;
-    }
-
-    public function getResult(){
-        return $this->_scalpel_result;
-    }
-
-    final public function getLastField(){
-        return $this->_field;
+    private function __construct(array $data = [], $scene = '') {
+        $this->_register($this->register,true);
+        $this->_scalpel();
+        $this->setScene($scene);
+        $this->_setDefault();
+        $this->create($data, false,true);
     }
 
     /**
@@ -184,19 +152,6 @@ class Struct {
     }
 
     /**
-     * Struct constructor.
-     * @param array $data
-     * @param string $scene
-     */
-    private function __construct(array $data = [], $scene = '') {
-        $this->_register($this->register,true);
-        $this->_scalpel();
-        $this->setScene($scene);
-        $this->_setDefault();
-        $this->create($data, false,true);
-    }
-
-    /**
      * Scalpel procedure
      */
     private function _scalpel() {
@@ -247,25 +202,6 @@ class Struct {
     }
 
     /**
-     * Is tag
-     * @param string $tag
-     * @param string $field
-     * @param bool $cover true or false, the default non-scene tag will cover the scene tag
-     * @return bool Non-scene tags > scene tags , Non-scene tags are effective in any scene
-     */
-    private function _isTagField(string $tag, string $field, bool $cover = true) {
-        if (isset($this->_scalpel_result[$field][$tag])) {
-            if(isset($this->_scalpel_result[$field][$tag]['']) and $cover){
-                return true;
-            }
-            if(isset($this->_scalpel_result[$field][$tag][$this->_scene])){
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Use Tag`s Validate
      * @param string $tag
      * @param string $field
@@ -281,284 +217,6 @@ class Struct {
         }
         return true;
     }
-
-    /**
-     * Factory
-     * @param array $data
-     * @param string $scene
-     * @return static
-     */
-    public static function factory(array $data = [],string $scene = '') {
-        $cls = get_called_class();
-        return new $cls($data, $scene);
-    }
-
-    /**
-     * Set Struct scene
-     * @param $scene
-     * @return $this
-     */
-    public function setScene($scene) {
-        $this->_scene = $scene;
-        return $this;
-    }
-
-    /**
-     * Create data
-     *
-     * @param array $data
-     * @param bool $validate
-     * @param bool $restrict
-     *      true or false, the default is True,the empty string in $data
-     * will be converted to NULL of the corresponding attribute of Struct
-     * @return bool
-     */
-    public function create(array $data, bool $validate = true, bool $restrict = true) {
-        if($data){
-            $fields = $this->_getFields();
-            $_data = [];
-            foreach ($fields as $f) {
-                $f = $f->getName();
-                if($restrict){
-                    $this->$f = $_data[$f] = (isset($data[$f]) and $data[$f] !== '') ? $data[$f] : $this->$f;
-                }else{
-                    $this->$f = $_data[$f] = isset($data[$f]) ? $data[$f] : $this->$f;
-                }
-            }
-            if ($validate) {
-                if (!$this->validate()) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    /**
-     * clean
-     * @param bool $default
-     * @return bool
-     */
-    public function clean(bool $default = false){
-        $fields = $this->_getFields();
-        foreach ($fields as $f) {
-            $f = $f->getName();
-            $this->$f = null;
-        }
-        if($default){
-            $this->_setDefault();
-        }
-        return true;
-    }
-
-    /**
-     * @param string $tag
-     * @param string $field
-     * @param bool true or false, the default non-scene tag will cover the scene tag
-     * @return Format Non-scene tags > scene tags , Non-scene tags are effective in any scene
-     */
-    final public function getTagFormat(string $tag, string $field, bool $cover = true){
-
-        if (isset($this->_scalpel_result[$field][$tag])) {
-            if(isset($this->_scalpel_result[$field][$tag]['']) and $cover){
-
-                return Format::instance()->set($this->_scalpel_result[$field][$tag]['']);
-            }
-            if(isset($this->_scalpel_result[$field][$tag][$this->_scene])){
-                return Format::instance()->set($this->_scalpel_result[$field][$tag][$this->_scene]);
-            }
-        }
-        return Format::instance();
-    }
-
-    /**
-     * validate base
-     * @return bool
-     */
-    public function validate() {
-        $this->_errors = [];
-        $this->_codes  = [];
-        if ($this->_scalpel_result) {
-            foreach ($this->_scalpel_result as $field => $content) {
-                # @skip
-                if($this->_isTagField('skip', $field)){
-                    continue;
-                }
-                # @required
-                if(
-                    $this->_isTagField('required',$field) and
-                    !$this->_useTagValidate('required',$field)
-                ){
-                    $support = $this->getTagFormat('required',$field);
-                    $this->_addError($field, $support->_error, $support->_code);
-                    continue;
-                }
-                # @rule
-                if(
-                    $this->_isTagField('rule',$field) and
-                    !$this->_useTagValidate('rule',$field)
-                ){
-                    $support = $this->getTagFormat('rule',$field);
-                    $this->_addError($field, $support->_error, $support->_code);
-                    continue;
-                }
-            }
-        }
-        return true;
-    }
-
-    /**
-     * 数组输出 [新版]
-     * @param int $filter
-     * @param int $output
-     * @param string $scene
-     * @return array
-     */
-    final public function outputArray($filter = self::FILTER_NORMAL, $output = self::OUTPUT_NORMAL, $scene = ''){
-        $fields = $this->_getFields();
-        if ($scene){
-            $this->setScene($scene);
-        }
-        $_data = [];
-        foreach ($fields as $f) {
-            $f = $f->getName();
-            if($this->_isTagField('ghost', $f)){
-                continue;
-            }
-            if (!is_array($this->$f)){
-                switch ($filter){
-                    case self::FILTER_KEY:
-                        if (!$this->_isTagField('key', $f)) {
-                            continue 2;
-                        }
-                        break;
-                    case self::FILTER_STRICT:
-                        if (
-                            is_null($this->$f) or
-                            $this->$f === '' or
-                            $this->_isTagField('skip', $f)
-                        ) {
-                            continue 2;
-                        }
-                        break;
-                    case self::FILTER_NULL:
-                        if (
-                            is_null($this->$f) or
-                            $this->_isTagField('skip', $f)
-                        ) {
-                            continue 2;
-                        }
-                        break;
-                    case self::FILTER_EMPTY:
-                        if (
-                            $this->$f === '' or
-                            $this->_isTagField('skip', $f)
-                        ) {
-                            continue 2;
-                        }
-                        break;
-                    case self::FILTER_NORMAL:
-                    default:
-                        break;
-                }
-            }
-            $value = '';
-            switch ($output){
-                case self::OUTPUT_NULL:
-                    $value = $this->$f === '' ? null : $this->$f;
-                    break;
-                case self::OUTPUT_EMPTY:
-                    $value = is_null($this->$f) ? '' : $this->$f;
-                    break;
-                case self::OUTPUT_KEY:
-                    if(!$this->_isTagField('key',$f)){
-                        continue 2;
-                    }
-                    break;
-                case self::OUTPUT_MAPPING:
-                    if(!$this->_isTagField('mapping',$f)){
-                        continue 2;
-                    }
-                    break;
-                case self::OUTPUT_NORMAL:
-                default:
-                    $value = $this->$f;
-                    break;
-            }
-            $res = $this->_parsingOperator($f,$value);
-            if(Filter::factory('assoc')->validate($res)){
-                foreach($res as $k => $v){
-                    if($k === 'key'){
-                        continue;
-                    }
-                    $_data[$res['key'].$k] = $v;
-                }
-            }else{
-                $_data[$res[0]] = $res[1];
-            }
-        }
-        $this->cleanSet();
-        return $_data;
-    }
-
-    /**
-     * @param $var
-     * @param Struct $struct
-     * @return false|int|string
-     */
-    public function getVariableName(&$var,Struct $struct){
-        $tmp = $var;
-        $var = 'tmp_value_'.mt_rand();
-        $name = array_search($var, $struct->outputArray());
-        $var = $tmp;
-        return $name;
-    }
-
-    /**
-     * 确认错误
-     * @param null $filed
-     * @return bool|mixed
-     */
-    public function hasError($filed = null) {
-        if (is_null($filed)) {
-            return count($this->_errors) > 0;
-        } else {
-            return $this->_errors[$filed];
-        }
-    }
-
-    /**
-     * 获取第一条错误
-     * @return string|null
-     */
-    public function getError() {
-        return $this->_errors ? array_values($this->_errors)[0] : null;
-    }
-
-    /**
-     * 获取第一条错误码
-     * @return string|null
-     */
-    public function getCode() {
-        return $this->_codes ? array_values($this->_codes)[0] : null;
-    }
-
-    /**
-     * 获取全部错误
-     * @return array
-     */
-    public function getErrors() {
-        return $this->_errors ? $this->_errors : [];
-    }
-
-    /**
-     * 获取全部错误码
-     * @return array
-     */
-    public function getCodes() {
-        return $this->_codes ? $this->_codes : [];
-    }
-
     /**
      * 过滤正则辅助
      * @param $value
@@ -568,7 +226,6 @@ class Struct {
         preg_match($this->_operatorPreg, $value, $match);
         return $match;
     }
-
     /**
      * 分析operator
      * @param $key
@@ -580,7 +237,7 @@ class Struct {
      */
     private function _parsingOperator($key,$value){
         if(
-            $this->_isTagField('operator', $key) and
+            $this->isTagField('operator', $key) and
             $value and
             is_string($value)
         ){
@@ -643,16 +300,301 @@ class Struct {
         return $scene == '' or $this->_scene == $scene;
     }
 
+    /**
+     * Global register tag
+     * @param $name
+     * @param $class
+     * @param $validate
+     */
+    public static function register($name, $class, $validate) {
+        if (array_key_exists($name, self::$_static_filters)){
+            throw new \InvalidArgumentException("@{$name} already", -1);
+        }
+        if (!is_subclass_of($class, __CLASS__)) {
+            throw new \InvalidArgumentException("Invalid Scalpel @{$name} -> {$class}",-2);
+        }
+        self::$_static_filters[$name] = [$class,$validate];
+    }
+
+    /**
+     * Set fields type
+     *  This is a global setting and will affect all [Struct]
+     *
+     * @param int $reflectionPropertyConst
+     */
+    public static function setFieldsType(int $reflectionPropertyConst){
+        self::$_fields_type = $reflectionPropertyConst;
+    }
+
+    /**
+     * Get fields type
+     * @return int
+     */
+    public static function getFieldsType(){
+        return self::$_fields_type;
+    }
+
+    /**
+     * @param string $field
+     * @return ScalpelInterface[]|ScalpelInterface
+     */
+    final public function getRegister(string $field = ''){
+        if($field){
+            return isset($this->_register[$field]) ? $this->_register[$field] : [];
+        }
+        return $this->_register;
+    }
+
+    /**
+     * Factory
+     * @param array $data
+     * @param string $scene
+     * @return static
+     */
+    public static function factory(array $data = [],string $scene = '') {
+        $cls = get_called_class();
+        return new $cls($data, $scene);
+    }
+
+    /**
+     * Set Struct scene
+     * @param string $scene
+     * @return $this
+     */
+    public function setScene(string $scene = '') {
+        $this->_scene = $scene;
+        return $this;
+    }
+
+    /**
+     * Is tag
+     * @param string $tag
+     * @param string $field
+     * @param bool $cover true or false, the default non-scene tag will cover the scene tag
+     * @return bool Non-scene tags > scene tags , Non-scene tags are effective in any scene
+     */
+    public function isTagField(string $tag, string $field, bool $cover = true) {
+        if (isset($this->_scalpel_result[$field][$tag])) {
+            if(isset($this->_scalpel_result[$field][$tag]['']) and $cover){
+                return true;
+            }
+            if(isset($this->_scalpel_result[$field][$tag][$this->_scene])){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Create data
+     *
+     * @param array $data
+     * @param bool $validate
+     * @param bool $restrict
+     *      true or false, the default is True,the empty string in $data
+     * will be converted to NULL of the corresponding attribute of Struct
+     * @return bool
+     */
+    public function create(array $data, bool $validate = true, bool $restrict = true) {
+        if($data){
+            $fields = $this->_getFields();
+            $_data = [];
+            foreach ($fields as $f) {
+                $f = $f->getName();
+                if($restrict){
+                    $this->$f = $_data[$f] = (isset($data[$f]) and $data[$f] !== '') ? $data[$f] : $this->$f;
+                }else{
+                    $this->$f = $_data[$f] = isset($data[$f]) ? $data[$f] : $this->$f;
+                }
+            }
+            if ($validate) {
+                if (!$this->validate()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * clean
+     * @param bool $default
+     * @return bool
+     */
+    public function clean(bool $default = false){
+        $fields = $this->_getFields();
+        foreach ($fields as $f) {
+            $f = $f->getName();
+            $this->$f = null;
+        }
+        if($default){
+            $this->_setDefault();
+        }
+        $this->setTemps();
+        $this->setScene();
+        $this->setOperator();
+        return true;
+    }
+
+    /**
+     * @param string $tag
+     * @param string $field
+     * @param bool true or false, the default non-scene tag will cover the scene tag
+     * @return Format Non-scene tags > scene tags , Non-scene tags are effective in any scene
+     */
+    final public function getTagFormat(string $tag, string $field, bool $cover = true){
+
+        if (isset($this->_scalpel_result[$field][$tag])) {
+            if(isset($this->_scalpel_result[$field][$tag]['']) and $cover){
+
+                return Format::instance()->set($this->_scalpel_result[$field][$tag]['']);
+            }
+            if(isset($this->_scalpel_result[$field][$tag][$this->_scene])){
+                return Format::instance()->set($this->_scalpel_result[$field][$tag][$this->_scene]);
+            }
+        }
+        return Format::instance();
+    }
+
+    /**
+     * validate base
+     * @return bool
+     */
+    public function validate() {
+        $this->_errors = [];
+        $this->_codes  = [];
+        if ($this->_scalpel_result) {
+            foreach ($this->_scalpel_result as $field => $content) {
+                # @skip
+                if($this->isTagField('skip', $field)){
+                    continue;
+                }
+                # @required
+                if(
+                    $this->isTagField('required',$field) and
+                    !$this->_useTagValidate('required',$field)
+                ){
+                    $support = $this->getTagFormat('required',$field);
+                    $this->_addError($field, $support->_error, $support->_code);
+                    continue;
+                }
+                # @rule
+                if(
+                    $this->isTagField('rule',$field) and
+                    !$this->_useTagValidate('rule',$field)
+                ){
+                    $support = $this->getTagFormat('rule',$field);
+                    $this->_addError($field, $support->_error, $support->_code);
+                    continue;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Output as array data
+     * @param int $filter Constant starting with FILTER_,
+     *      set the filtering level of output field
+     * @param int $output Constant starting with OUTPUT_,
+     *      set the output type
+     * @param int $operator Constant starting with OPERATOR_,
+     *      Set special handling of output field values
+     * @return array
+     */
+    final public function outputArray($filter = self::FILTER_NORMAL, $output = self::OUTPUT_NORMAL, $operator = self::OPERATOR_CLOSE){
+        $fields = $this->_getFields();
+        $_data = [];
+        $this->setOperator($operator);
+        foreach ($fields as $f) {
+            $f = $f->getName();
+            if($this->isTagField('ghost', $f)){
+                continue;
+            }
+            if (!is_array($this->$f)){
+                switch ($filter){
+                    case self::FILTER_KEY:
+                        if (!$this->isTagField('key', $f)) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_STRICT:
+                        if (
+                            is_null($this->$f) or
+                            $this->$f === '' or
+                            $this->isTagField('skip', $f)
+                        ) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_NULL:
+                        if (
+                            is_null($this->$f) or
+                            $this->isTagField('skip', $f)
+                        ) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_EMPTY:
+                        if (
+                            $this->$f === '' or
+                            $this->isTagField('skip', $f)
+                        ) {
+                            continue 2;
+                        }
+                        break;
+                    case self::FILTER_NORMAL:
+                    default:
+                        break;
+                }
+            }
+            $value = '';
+            switch ($output){
+                case self::OUTPUT_NULL:
+                    $value = $this->$f === '' ? null : $this->$f;
+                    break;
+                case self::OUTPUT_EMPTY:
+                    $value = is_null($this->$f) ? '' : $this->$f;
+                    break;
+                case self::OUTPUT_KEY:
+                    if(!$this->isTagField('key',$f)){
+                        continue 2;
+                    }
+                    break;
+                case self::OUTPUT_MAPPING:
+                    if(!$this->isTagField('mapping',$f)){
+                        continue 2;
+                    }
+                    break;
+                case self::OUTPUT_NORMAL:
+                default:
+                    $value = $this->$f;
+                    break;
+            }
+            $res = $this->_parsingOperator($f,$value);
+            if(Filter::factory('assoc')->validate($res)){
+                foreach($res as $k => $v){
+                    if($k === 'key'){
+                        continue;
+                    }
+                    $_data[$res['key'].$k] = $v;
+                }
+            }else{
+                $_data[$res[0]] = $res[1];
+            }
+        }
+        $this->setScene();
+        $this->setOperator();
+        return $_data;
+    }
 
     /**
      * 设置过滤类型
      * @param int $operator OPERATOR_开头的常量进行设置
-     * @param bool $need    false:不会判断场景 true:会判断特定场景
      * @return $this
      */
-    public function setOperator(int $operator,$need = true){
+    public function setOperator(int $operator = self::OPERATOR_CLOSE){
         $this->_operator = $operator;
-        $this->_operatorKeyNeed = $need;
         return $this;
     }
 
@@ -664,11 +606,69 @@ class Struct {
     }
 
     /**
-     * 重置设置项
+     * @param $var
+     * @param Struct $struct
+     * @return false|int|string
      */
-    public function cleanSet(){
-        $this->_operator = self::OPERATOR_CLOSE;
-        $this->_operatorKeyNeed = true;
+    public function getVariableName(&$var,Struct $struct){
+        $tmp = $var;
+        $var = 'tmp_value_'.mt_rand();
+        $name = array_search($var, $struct->outputArray());
+        $var = $tmp;
+        return $name;
+    }
+
+    /**
+     * 确认错误
+     * @param null $filed
+     * @return bool|mixed
+     */
+    public function hasError($filed = null) {
+        if (is_null($filed)) {
+            return count($this->_errors) > 0;
+        } else {
+            return $this->_errors[$filed];
+        }
+    }
+
+    /**
+     * 获取第一条错误
+     * @return string|null
+     */
+    public function getError() {
+        return $this->_errors ? array_values($this->_errors)[0] : null;
+    }
+
+    /**
+     * 获取第一条错误码
+     * @return string|null
+     */
+    public function getCode() {
+        return $this->_codes ? array_values($this->_codes)[0] : null;
+    }
+
+    /**
+     * 获取全部错误
+     * @return array
+     */
+    public function getErrors() {
+        return $this->_errors ? $this->_errors : [];
+    }
+
+    /**
+     * 获取全部错误码
+     * @return array
+     */
+    public function getCodes() {
+        return $this->_codes ? $this->_codes : [];
+    }
+
+    public function getResult(){
+        return $this->_scalpel_result;
+    }
+
+    final public function getLastField(){
+        return $this->_field;
     }
 
     /**
@@ -685,7 +685,7 @@ class Struct {
         $_data = [];
         foreach ($fields as $f) {
             $f = $f->getName();
-            if (!$this->_isTagField('key',$f)) {
+            if (!$this->isTagField('key',$f)) {
                 continue; # 排除非key字段
             }
             if(!is_array($this->$f)){
@@ -707,7 +707,8 @@ class Struct {
                 $_data[$res[0]] = $res[1];
             }
         }
-        $this->cleanSet();
+        $this->setScene();
+        $this->setOperator();
         return $_data;
     }
 
@@ -726,17 +727,17 @@ class Struct {
         $_data = [];
         foreach ($fields as $f) {
             $f = $f->getName();
-            if (($mapping = $this->_isTagField('mapping', $f)) === false){
+            if (($mapping = $this->isTagField('mapping', $f)) === false){
                 continue;
             }
-            if ($this->_isTagField('ghost', $f)) {
+            if ($this->isTagField('ghost', $f)) {
                 continue;
             }
 
             if (!is_array($this->$f)){
                 switch ($filter){
                     case self::FILTER_KEY:
-                        if (!$this->_isTagField('key',$this->$f)) {
+                        if (!$this->isTagField('key',$this->$f)) {
                             continue 2;
                         }
                         break;
@@ -744,7 +745,7 @@ class Struct {
                         if (
                             is_null($this->$f) or
                             $this->$f === '' or
-                            $this->_isTagField('skip', $f)
+                            $this->isTagField('skip', $f)
                         ) {
                             continue 2;
                         }
@@ -752,7 +753,7 @@ class Struct {
                     case self::FILTER_NULL:
                         if (
                             is_null($this->$f) or
-                            $this->_isTagField('skip', $f)
+                            $this->isTagField('skip', $f)
                         ) {
                             continue 2;
                         }
@@ -760,7 +761,7 @@ class Struct {
                     case self::FILTER_EMPTY:
                         if (
                             $this->$f === '' or
-                            $this->_isTagField('skip', $f)
+                            $this->isTagField('skip', $f)
                         ) {
                             continue 2;
                         }
@@ -803,10 +804,9 @@ class Struct {
                 }
             }
         }
-        $this->cleanSet();
+        $this->setScene();
+        $this->setOperator();
         return $_data;
     }
-
-
 
 }

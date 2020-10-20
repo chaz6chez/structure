@@ -35,7 +35,10 @@ use Example\User;
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 $support = User::factory();
-var_dump($support->getResult());
+$support->ads = 6;
+var_dump($support->ads);
+//var_dump($support->getTemps());
+//var_dump($support->getResult());
 
 
 //$support->age = '123[>]|456[<]';

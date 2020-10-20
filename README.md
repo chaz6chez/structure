@@ -1,18 +1,20 @@
 # structure
 
-## v1.0.5
+##[v1.*](https://github.com/Chaz6Chez/structure/blob/1.x/README.md)
+ - v2与v1不兼容，老版本请跳转 [文档](https://github.com/Chaz6Chez/structure/blob/1.x/README.md)
+## v2.0.0 -alpha
 
-
-一个没什么用的验证器
-
-有什么好的建议和想法，请联系250220719@qq.com
+- 该版本为非稳定版
+- 结构及调用方式都相较v1做了很多优化和改动
+- 有什么好的建议和想法，请联系250220719@qq.com
 ***
-## 使用场景
+### 使用场景
  - 接口出参入参
  - 方法参数结构体
  - 数据库字段映射
  
-## 说明
+### 说明
+
  - 新建类继承Structure下的Struct即可
 ````
 namespace Example;
@@ -23,6 +25,20 @@ class User extends Struct{
 
 }
 ````
+ - 可以使用protected $register属性注册自己的tag
+ - 需要注意的是，tag对应的类需要实现ScalpelInterface接口
+````
+namespace Example;
+
+use Structure\Struct;
+
+class User extends Struct{
+    protected $register = [
+        'example' => 'Example/ExampleScalpel'
+    ];
+}
+```` 
+ 
  - 创建public属性
 ````
 namespace Example;
@@ -233,33 +249,25 @@ $user->serScene('check');
 $user->setOperator($user::OPERATER_LOAD_OUTPUT);
 ````
 
-#### emptyToNull($bool[默认值])
-- 设置属性值赋值时是否将空字符串转化为null
-- 默认true
-````
-$user->emptyToNull(false);
-````
-
-#### ~~toArray($filterNull)~~
-- **请使用outputArray**
-
-#### ~~toArrayStrict($filterNull)~~
-- **请使用outputArray**
-
-#### outputArray($filter[默认值],$output[默认值],$scene[非必要])
+#### outputArray($filter[默认值],$output[默认值],$operator[默认值])
 - 输出类方法
 - 将public属性整合以array输出返回
-- $filter可使用一下常量进行过滤操作
+- $filter可使用以下常量进行过滤操作
    - FILTER_NORMAL # 默认不过滤
    - FILTER_NULL   # 过滤NULL
    - FILTER_EMPTY  # 过滤空字符串
    - FILTER_STRICT # 严格过滤
-   - FILTER_KEY    # 仅输出KEY字段
-- $output可使用一下常量进行输出处理
+   - FILTER_KEY    # 过滤KEY字段
+- $output可使用以下常量进行输出处理
    - OUTPUT_NORMAL  # 默认输出
    - OUTPUT_NULL    # 空字符串转NULL
    - OUTPUT_EMPTY   # NULL转空字符串
-   - OUTPUT_KEY     # 仅输出KEY字段  
+   - OUTPUT_KEY     # 仅输出KEY字段
+   - OUTPUT_MAPPING # 仅输出MAPPING字段  
+- $operator可使用以下常量进行输出处理
+   - OPERATOR_CLOSE          # 默认关闭
+   - OPERATOR_LOAD_OUTPUT    # 装载输出
+   - OPERATOR_FILTER_OUTPUT  # 过滤输出
     
 #### outputArrayUseMapping($filter[默认值],$output[默认值],$scene[非必要])
    - 输出类方法
@@ -286,7 +294,7 @@ $user->emptyToNull(false);
 #### create($data,$validate[默认])
 - 映射数据
 
-#### validate($data[非必要])
+#### validate()
 - 验证
 
 #### hasError($filed[非必要])
@@ -311,8 +319,6 @@ $user->emptyToNull(false);
 | :---: | :---: | :---| 
 |   factory($data,$scene)| data:数据(可选) scene:场景(可选) | 实例化方法,可加载数据和场景 |
 |   setScene($scene)| scene:场景 | 设置场景,在验证方法之前调用有效 |
-|   toArray($filterNull)| filterNull:是否过滤空值(可选) | 数据以数组形式输出（不过滤空字符串） |
-|   toArrayStrict($filterNull)| filterNull:是否过滤空值(可选) | 数据以数组形式输出（过滤空字符串） |
 |   outputArrayByKey($filterNull,$scene)| filterNull:是否过滤空值(可选) scene:场景 | 数据以数组形式输出（不过滤空字符串） |
 |   create($data,$validate)| data:数据 validate:是否执行验证(可选) | 输入数据,可执行验证 |
 |   validate($data)| data:数据(可选) | 验证器方法,可加载数据 |
