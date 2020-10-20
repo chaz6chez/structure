@@ -1,6 +1,6 @@
 # structure
 
-##[v1.*](https://github.com/Chaz6Chez/structure/blob/1.x/README.md)
+## [v1.*](https://github.com/Chaz6Chez/structure/blob/1.x/README.md)
  - v2与v1不兼容，老版本请跳转 [文档](https://github.com/Chaz6Chez/structure/blob/1.x/README.md)
 ## v2.0.0 -alpha
 
