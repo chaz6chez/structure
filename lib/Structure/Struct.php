@@ -353,7 +353,7 @@ class Struct {
                 continue; # 排除鬼魂字段
             }
 
-            if (!is_array($this->$f)){
+            if (!is_array($this->$f) and !$this->_fields){
                 switch ($filter){
                     case self::FILTER_KEY:
                         if (
@@ -446,7 +446,7 @@ class Struct {
                 continue;
             }
 
-            if (!is_array($this->$f)){
+            if (!is_array($this->$f) and !$this->_fields){
                 switch ($filter){
                     case self::FILTER_KEY:
                         if (!$this->_isKeyField($this->$f,$scene)) {
