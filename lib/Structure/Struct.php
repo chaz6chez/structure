@@ -24,6 +24,8 @@ class Struct {
     const OUTPUT_KEY    = 3; # 仅输出KEY字段
 
 # ------------------- set start ----------------
+
+    protected $_fields = [];
     /**
      * 子类继承重写
      *
@@ -123,6 +125,14 @@ class Struct {
         return $name;
     }
 
+    public function field($fields){
+        if(!is_array($fields)){
+            $fields = $fields === '*' ? [] :explode(',',$fields);
+        }
+        $this->_fields = $fields;
+        return $this;
+    }
+
     /**
      * 设置empty to null
      * @param bool $bool
@@ -159,6 +169,7 @@ class Struct {
         $this->_empty_to_null = true;
         $this->_operator = self::OPERATER_CLOASE;
         $this->_operatorKeyNeed = true;
+        $this->_fields = [];
     }
 
     /**
@@ -193,6 +204,12 @@ class Struct {
         $_data = [];
         foreach ($fields as $f) {
             $f = $f->getName();
+
+            if($this->_fields){
+               if(!in_array($f,$this->_fields)){
+                   continue;
+               }
+            }
 
             if ($this->_isGhostField($f)) {
                 continue; # 排除鬼魂字段
@@ -238,7 +255,11 @@ class Struct {
         $_data = [];
         foreach ($fields as $f) {
             $f = $f->getName();
-
+            if($this->_fields){
+                if(!in_array($f,$this->_fields)){
+                    continue;
+                }
+            }
             if ($this->_isGhostField($f)) {
                 continue; # 排除鬼魂字段
             }
@@ -283,10 +304,15 @@ class Struct {
 
         foreach ($fields as $f) {
             $f = $f->getName();
+
             if (!$this->_isKeyField($f,$scene)) {
                 continue; # 排除非key字段
             }
-
+            if($this->_fields){
+                if(!in_array($f,$this->_fields)){
+                    continue;
+                }
+            }
             if(!is_array($this->$f)){
                 if ($filterNull){
                     if (is_null($this->$f)) {
@@ -410,6 +436,12 @@ class Struct {
             if (($mapping = $this->_isMappingField($f, $scene)) === false){
                 continue;
             }
+            if($this->_fields){
+                if(!in_array($f,$this->_fields)){
+                    continue;
+                }
+            }
+
             if ($this->_isGhostField($f)) {
                 continue;
             }
