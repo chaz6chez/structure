@@ -616,14 +616,14 @@ class Struct {
                 foreach ($v['rule'] as $r) {
                     if ($this->_checkScene($r['scene'])) {
                         $validator = $r['content'];
-
+                        $type = $r['type'];
                         # 创建错误(校验过程)
                         $check = true;
                         switch (true){
-                            case $this->_rck == 'func':
+                            case $type == 'func':
                                 $check = call_user_func($validator, $data[$f]);
                                 break;
-                            case $this->_rck == 'method':
+                            case $type == 'method':
                                 $check = call_user_func($validator, $data[$f], $f, $data);
                                 break;
                             case $validator instanceof Filter:
@@ -789,18 +789,9 @@ class Struct {
                                 if(count($rca) < 2){
                                     $rca = explode(':',$rc[0]);
                                 }
-                                $this->_rck = isset($rca[0]) ? trim($rca[0]) : '';
-                                $this->_rcs = isset($rca[1]) ? trim($rca[1]) : '';
-
-//                            foreach ($rca as $k => $o){
-//                                if($k == 0){
-//                                    continue;
-//                                }
-//                                $o = explode(':', $o, 2);
-//                                $this->_rco[$o[0]] = $o[1];
-//                            }
-
                                 $rule = [];
+                                $rule['type'] = $this->_rck = isset($rca[0]) ? trim($rca[0]) : '';
+                                $this->_rcs = isset($rca[1]) ? trim($rca[1]) : '';
                                 switch (true) {
                                     case $this->_rck === 'func': # 调用函数验证,传入当前字段的值
                                         $rule['content'] = $this->_rcs;
