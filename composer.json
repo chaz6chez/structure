@@ -2,7 +2,11 @@
     "name": "chaz6chez/structure",
     "description": "小型的数据映射过滤工具",
     "require": {
-        "php": ">=7.0.0"
+        "php": ">=7.3",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9"
     },
     "license": "MIT",
     "authors": [
@@ -13,8 +17,15 @@
     ],
     "autoload": {
         "psr-4": {
-            "Structure\\": "lib/Structure",
-            "Example\\": "examples/"
+            "Structure\\": "src"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Structure\\Tests\\": "tests/"
+        },
+        "files": [
+            "src/constant.php"
+        ]
     }
 }
