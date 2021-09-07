@@ -20,16 +20,23 @@ class Error {
     protected $_code;
 
     /**
+     * @var string|null
+     */
+    protected $_position;
+
+    /**
      * Error constructor.
      * @param null|string $field
      * @param null|string $message
      * @param string|null $code
+     * @param string|null $position
      */
-    public function __construct(?string $field, ?string $message, ?string $code = null)
+    public function __construct(?string $field, ?string $message, ?string $code = null, ?string $position = null)
     {
         $this->setField($field);
         $this->setMessage($message);
         $this->setCode($code);
+        $this->setPosition($position);
     }
 
     /**
@@ -78,5 +85,21 @@ class Error {
     public function setCode(?string $code): void
     {
         $this->_code = $code;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getPosition(): ?string
+    {
+        return $this->_position;
+    }
+
+    /**
+     * @param string|null $position
+     */
+    public function setPosition(?string $position): void
+    {
+        $this->_position = $position;
     }
 }

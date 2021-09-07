@@ -22,9 +22,9 @@ class URLHandler extends AbstractHandler {
         return filter_var($value, FILTER_VALIDATE_URL, $flags);
     }
 
-    public function default()
+    public function default(string $default) : ?string
     {
-        // TODO: Implement default() method.
+        return $this->validate($default) ? $default : null;
     }
 
 }

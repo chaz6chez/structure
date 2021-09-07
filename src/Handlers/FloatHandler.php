@@ -8,18 +8,25 @@ class FloatHandler extends AbstractHandler {
     protected $_defaultOptions = [
         'min' => PHP_FLOAT_MIN,
         'max' => PHP_FLOAT_MAX,
+        'scale' => null
     ];
 
     public function filter($value) : ?float
     {
         if (!is_float($value)) {
-            return null;
+            return $this->setPosition('_type_');
         }
         if ($this->getOption('min') > $value) {
-            return null;
+            return $this->setPosition('_min_');
         }
         if ($this->getOption('max') < $value) {
-            return null;
+            return $this->setPosition('_max_');
+        }
+        if (
+            $scale = $this->getOption('scale') and
+            (int)$scale < strlen(substr(strrchr((string)$value, '.'), 1))
+        ){
+            return $this->setPosition('_scale_');
         }
         return $value;
     }

@@ -12,14 +12,14 @@ class ObjectHandler extends AbstractHandler {
     public function filter($value) : ?object
     {
         if (!is_object($value)) {
-            return null;
+            return $this->setPosition('_type_');
         }
         if (
             $class = $this->getOption('class') and
             class_exists($class, false) and
             !$value instanceof $class
         ) {
-            return null;
+            return $this->setPosition('_class_');
         }
         return $value;
     }

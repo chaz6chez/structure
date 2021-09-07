@@ -16,13 +16,13 @@ class StringHandler extends AbstractHandler {
     public function filter($value) : ?string
     {
         if (!is_string($value)) {
-            return null;
+            return $this->setPosition('_type_');
         }
         if ($this->getOption('min') > strlen($value)) {
-            return null;
+            return $this->setPosition('_min_');
         }
         if ($this->getOption('max') < strlen($value)) {
-            return null;
+            return $this->setPosition('_max_');
         }
         return $value;
     }

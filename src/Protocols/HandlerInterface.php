@@ -22,4 +22,15 @@ interface HandlerInterface {
      * @return mixed
      */
     public function default(string $default);
+
+    /**
+     * @param string $position
+     * @return null
+     */
+    public function setPosition(string $position);
+
+    /**
+     * @return string|null
+     */
+    public function getPosition(): ?string;
 }

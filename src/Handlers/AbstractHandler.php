@@ -9,15 +9,31 @@ abstract class AbstractHandler implements HandlerInterface {
 
     protected $_defaultOptions = [];
     protected $_options = [];
+    protected $_position;
 
     /**
      * Struct constructor.
      * @param array|null $options
      */
     final public function __construct(?array $options = null) {
-        if($options){
-            $this->setOptions($options);
-        }
+        $this->setOptions($options ?? $this->_defaultOptions);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    final public function setPosition(string $position)
+    {
+        $this->_position = $position;
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    final public function getPosition(): ?string
+    {
+        return $this->_position;
     }
 
     /**

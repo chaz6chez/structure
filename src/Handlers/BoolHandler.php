@@ -10,7 +10,10 @@ class BoolHandler extends AbstractHandler {
 
     public function filter($value) : ?bool
     {
-        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if(!is_bool($value)){
+            return $this->setPosition('_type_');
+        }
+        return $value;
     }
 
     public function default(string $default) : bool

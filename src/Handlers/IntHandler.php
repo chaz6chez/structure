@@ -13,13 +13,13 @@ class IntHandler extends AbstractHandler {
     public function filter($value) : ?int
     {
         if (!is_int($value)) {
-            return null;
+            return $this->setPosition('_type_');
         }
         if ($this->getOption('min') > $value) {
-            return null;
+            return $this->setPosition('_min_');
         }
         if ($this->getOption('max') < $value) {
-            return null;
+            return $this->setPosition('_max_');
         }
         return $value;
     }

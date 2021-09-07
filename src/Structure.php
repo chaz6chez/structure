@@ -13,17 +13,6 @@ abstract class Structure {
     protected $_scene;
 
     /**
-     * @var AbstractHandler[]
-     */
-    protected static $_handler = [];
-
-    protected $_cache = [];
-    /**
-     * @var array
-     */
-    protected $_raw = [];
-
-    /**
      * @var ReflectionProperty[]
      */
     protected $_fields;
@@ -41,16 +30,29 @@ abstract class Structure {
     protected $_analysis = [];
 
     /**
+     * @var array
+     */
+    protected $_cache = [];
+    /**
+     * @var array
+     */
+    protected $_raw = [];
+    /**
      * @var Error[] 错误信息
      */
-    protected $_errors;
+    protected $_errors = [];
+
+    /**
+     * @var AbstractHandler[]
+     */
+    protected static $_handler = [];
 
     /**
      * Structure constructor.
-     * @param array|null $data
+     * @param array $data
      * @param string $scene
      */
-    public function __construct(?array $data = null, string $scene = '')
+    public function __construct(array $data = [], string $scene = '')
     {
         $this->_fields()
             ->_analysis()
@@ -79,10 +81,10 @@ abstract class Structure {
     }
 
     /**
-     * @param array|null $data
+     * @param array $data
      * @return static
      */
-    public function create(?array $data = null): Structure
+    public function create(array $data = []): Structure
     {
         if($data){
             $this->_raw = $data;
@@ -95,10 +97,12 @@ abstract class Structure {
     }
 
     /**
+     * @param bool $afresh
      * @return bool
      */
-    public function validate() : bool
+    public function validate(bool $afresh = false) : bool
     {
+        $this->_errors = !$afresh ? $this->_errors : [];
         if(!$this->_errors){
             foreach ($this->_analysis as $fieldName => $value){
                 if($this->_getContent($fieldName,STRUCT_TAG_SKIP, $this->_scene, true)){
@@ -129,7 +133,7 @@ abstract class Structure {
                             try{
                                 $handler = $this->_handler($mode, Handler::optionsStrToArr($content));
                                 if(!$handler->validate($this->_getValue($fieldName))){
-                                    $this->_addError($fieldName, $error);
+                                    $this->_addError($fieldName, $error, $handler->getPosition());
                                 }
                             }catch (InvalidArgumentException $exception){
 
@@ -140,6 +144,25 @@ abstract class Structure {
             }
         }
         return $this->hasError();
+    }
+
+    /**
+     * @param bool $createRaw
+     * @return $this
+     */
+    public function clean(bool $createRaw = false): Structure
+    {
+        $raw = $this->getRaw();
+        $this->_filters = [];
+        $this->_scene = null;
+        $this->_raw = [];
+        $this->_errors = [];
+        $this->_cache = [];
+        self::$_handler = [];
+        if($createRaw){
+            return $this->create($raw);
+        }
+        return $this;
     }
 
     /**
@@ -213,6 +236,14 @@ abstract class Structure {
     }
 
     /**
+     * @return array
+     */
+    public function getRaw(): array
+    {
+        return $this->_raw;
+    }
+
+    /**
      * @param string $name
      * @param array|null $options
      * @return AbstractHandler
@@ -266,10 +297,11 @@ abstract class Structure {
     /**
      * @param string $field
      * @param string $error
+     * @param string|null $position
      */
-    protected function _addError(string $field, string $error){
+    protected function _addError(string $field, string $error, ?string $position = null){
         [$msg, $code] = explode(':', $error, 2);
-        $this->_errors[] = new Error($field, $msg, $code);
+        $this->_errors[] = new Error($field, $msg, $code, $position);
     }
 
     /**
@@ -344,9 +376,8 @@ abstract class Structure {
                     }
                     [, $tags, $scenes, $contents] = $matches;
                     foreach ($tags as $key => $tag){
-                        $this->_analysis[$name][$tag] = [
-                            $scenes[$key] => explode('|',trim($contents[$key]),2)
-                        ];
+                        $this->_analysis[$name][$tag][$scenes[$key]]
+                            = explode('|',trim($contents[$key]),2);
                     }
                 }
             }

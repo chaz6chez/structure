@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace Structure\Handlers;
 
+use Structure\Handler;
+use ArrayAccess;
+use InvalidArgumentException;
+
 class ArrayHandler extends AbstractHandler {
 
     protected $_defaultOptions = [
@@ -13,26 +17,30 @@ class ArrayHandler extends AbstractHandler {
 
     public function filter($value) : ?array
     {
-        if (!is_array($value)) {
-            return null;
+        if (!is_array($value) and !$value instanceof ArrayAccess) {
+            return $this->setPosition('_type_');
         }
+        $value = (array)$value;
         $count = count($value);
-        if(!boolval(array_keys($value) !== range(0, $count - 1))){
-            return null;
+        if(boolval(array_keys($value) !== range(0, $count - 1))){
+            return $this->setPosition('_type_array_');
         }
         if ($this->getOption('min') > $count) {
-            return null;
+            return $this->setPosition('_min_');
         }
         if ($this->getOption('max') < $count) {
-            return null;
+            return $this->setPosition('_max_');
         }
         if ($this->getOption('values')) {
-            $filter = new self($this->getOption('values'));
-            foreach ($value as $k => $v) {
-                if (!$filter->validate($k)) {
-                    unset($value[$k]);
+            try {
+                $filter = Handler::factory($this->getOption('values'));
+                foreach ($value as $v) {
+                    if (!$filter->validate($v)) {
+                        return $this->setPosition('_values_');
+                    }
                 }
-            }
+            }catch (InvalidArgumentException $exception){}
+
         }
         return $value;
     }
