@@ -15,16 +15,16 @@ class IPHandler extends AbstractHandler {
     public function filter($value) : ?string
     {
         $flags = 0;
-        if ($this->getOption('ipv4')) {
+        if ($this->getOption('ipv4') === true) {
             $flags |= FILTER_FLAG_IPV4;
         }
-        if ($this->getOption('ipv6')) {
+        if ($this->getOption('ipv6') === true) {
             $flags |= FILTER_FLAG_IPV6;
         }
-        if (!$this->getOption('private')) {
+        if ($this->getOption('private') !== true) {
             $flags |= FILTER_FLAG_NO_PRIV_RANGE;
         }
-        if (!$this->getOption('reserved')) {
+        if ($this->getOption('reserved') !== true) {
             $flags |= FILTER_FLAG_NO_RES_RANGE;
         }
         return filter_var($value, FILTER_VALIDATE_IP, $flags);

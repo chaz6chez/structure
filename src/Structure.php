@@ -10,6 +10,7 @@ use InvalidArgumentException;
 abstract class Structure {
 
     protected $_filters = [];
+    protected $_transfers = [];
     protected $_scene;
 
     /**
@@ -67,6 +68,16 @@ abstract class Structure {
     public function filter(int ...$filter) : Structure
     {
         $this->_filters = array_flip(array_flip($filter));
+        return $this;
+    }
+
+    /**
+     * @param int ...$transfer
+     * @return $this
+     */
+    public function transfer(int ...$transfer) : Structure
+    {
+        $this->_transfers = array_flip(array_flip($transfer));
         return $this;
     }
 
@@ -143,7 +154,7 @@ abstract class Structure {
                 }
             }
         }
-        return $this->hasError();
+        return !empty($this->_errors);
     }
 
     /**
@@ -154,6 +165,7 @@ abstract class Structure {
     {
         $raw = $this->getRaw();
         $this->_filters = [];
+        $this->_transfers = [];
         $this->_scene = null;
         $this->_raw = [];
         $this->_errors = [];
@@ -174,8 +186,12 @@ abstract class Structure {
         $data = [];
         foreach ($this->_fields as $field){
             $field = $field->getName();
+            $fieldName = $this->_getField($field);
             $value = $this->_getValue($field);
             if(!$full){
+                if($this->_getContent($field, STRUCT_TAG_GHOST, $this->_scene, true)){
+                    continue;
+                }
                 foreach ($this->_filters as $filter) {
                     switch ($filter) {
                         case STRUCT_FILTER_NULL:
@@ -203,20 +219,33 @@ abstract class Structure {
                                 continue 2;
                             }
                             break;
+                        case STRUCT_FILTER_OPERATOR:
+                            if($this->_getContent($field, STRUCT_TAG_OPERATOR, $this->_scene, true)){
+                                continue 2;
+                            }
+                            break;
+                        case STRUCT_FILTER_OPERATOR_REVERSE:
+                            if(!$this->_getContent($field, STRUCT_TAG_OPERATOR, $this->_scene, true)){
+                                continue 2;
+                            }
+                            break;
                     }
                 }
+                $this->_filters = [];
+                $this->_transfers = [];
             }
-            $data[$field] = $value;
+            $data[$fieldName] = $value;
         }
         return $data;
     }
 
     /**
+     * @param bool $afresh
      * @return bool
      */
-    public function hasError() : bool
+    public function hasError(bool $afresh = false) : bool
     {
-        return !empty($this->_errors);
+        return $this->validate($afresh);
     }
 
     /**
@@ -262,12 +291,13 @@ abstract class Structure {
 
     /**
      * @param string $field
+     * @param bool $transfer
      * @return mixed|string|object|array|int|float
      */
-    protected function _getValue(string $field)
+    protected function _getValue(string $field, bool $transfer = true)
     {
         $result = $this->{$field};
-        if($result === null and isset($this->_cache[$field])){
+        if($result === null and isset($this->_cache[$this->_scene][$field])){
             if([$content, ] = $this->_getContent($field, STRUCT_TAG_DEFAULT, $this->_scene, true)){
                 [$mode, $content] = explode(':', $content, 2);
                 switch ($mode){
@@ -289,9 +319,100 @@ abstract class Structure {
                         break;
                 }
             }
-            $this->_cache[$field] = $result;
+            $this->_cache[$this->_scene][$field] = $result;
         }
+        if($transfer){
+            foreach ($this->_transfers as $transfer){
+                switch ($transfer) {
+                    case STRUCT_TRANSFER_OPERATOR:
+                        if(
+                            !$this->_getTagCache($field, STRUCT_TAG_OPERATOR) and
+                            $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true) and
+                            is_string($result)
+                        ){
+                            $match = $this->_operatorPreg($result);
+                            $this->_setTagCache($field,STRUCT_TAG_OPERATOR,isset($match['operator'])
+                                ? [
+                                    "{$field}[{$match['operator']}]",
+                                    $field,
+                                    $result = count($arr = explode(',',$match['column'])) > 1
+                                            ? $arr
+                                            : $match['column']
+                                ]
+                                : [
+                                    $field,
+                                    $field,
+                                    $result
+                                ]);
+                        }
+                        break;
+                    case STRUCT_TRANSFER_MAPPING:
+                        if(
+                            !$this->_getTagCache($field, STRUCT_TAG_MAPPING) and
+                            $content = $this->_getContent($field,STRUCT_TAG_MAPPING, $this->_scene,true)
+                        ){
+                            $this->_setTagCache($field,STRUCT_TAG_MAPPING,[
+                                trim((string)$content),
+                                $field,
+                                $result
+                            ]);
+                        }
+                        break;
+                }
+            }
+        }
+
         return $result;
+    }
+
+    /**
+     * @param string $field
+     * @param bool $transfer
+     * @return string
+     */
+    protected function _getField(string $field, bool $transfer = true) : string
+    {
+        if($transfer){
+            foreach ($this->_transfers as $transfer){
+                switch ($transfer) {
+                    case STRUCT_TRANSFER_OPERATOR:
+                        if($this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true)){
+                            $this->_getValue($field);
+                            [$field,,] = $this->_getTagCache($field, STRUCT_TAG_OPERATOR);
+                        }
+                        break;
+                    case STRUCT_TRANSFER_MAPPING:
+                        if($this->_getContent($field,STRUCT_TAG_MAPPING, $this->_scene,true)){
+                            $this->_getValue($field);
+                            [$field,,] = $this->_getTagCache($field, STRUCT_TAG_MAPPING);
+                        }
+                        break;
+                }
+            }
+        }
+        return $field;
+    }
+
+    /**
+     * @param string $field
+     * @param string $tag
+     * @param array $value
+     */
+    protected function _setTagCache(string $field, string $tag, array $value) : void
+    {
+        $this->_cache[$this->_scene]["_{$tag}_{$field}"] = $value;
+    }
+
+    /**
+     * @param string $field
+     * @param string $tag
+     * @return array|null
+     */
+    protected function _getTagCache(string $field, string $tag) : ?array
+    {
+        return isset($this->_cache[$this->_scene]["_{$tag}_{$field}"])
+            ? $this->_cache[$this->_scene]["_{$tag}_{$field}"]
+            : null;
     }
 
     /**
@@ -343,6 +464,20 @@ abstract class Structure {
             $this->_fields = $class->getProperties(ReflectionProperty::IS_PUBLIC);
         }
         return $this;
+    }
+
+    /**
+     * @param $value
+     * @return mixed
+     */
+    private function _operatorPreg($value)
+    {
+        preg_match(
+            '/(?<column>[\s\S]*(?=\[(?<operator>\+|\-|\*|\/|\>\=?|\<\=?|\!|\<\>|\>\<|\!?~)\]$)|[\s\S]*)/',
+            $value,
+            $match
+        );
+        return $match;
     }
 
     /**

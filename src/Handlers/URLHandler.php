@@ -13,10 +13,10 @@ class URLHandler extends AbstractHandler {
     public function filter($value) : ?string
     {
         $flags = 0;
-        if ($this->getOption('path')) {
+        if ($this->getOption('path') and $this->getOption('path') === 'true') {
             $flags |= FILTER_FLAG_PATH_REQUIRED;
         }
-        if ($this->getOption('query')) {
+        if ($this->getOption('query') and $this->getOption('query') === 'true') {
             $flags |= FILTER_FLAG_QUERY_REQUIRED;
         }
         return filter_var($value, FILTER_VALIDATE_URL, $flags);
