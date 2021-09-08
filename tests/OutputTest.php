@@ -84,6 +84,15 @@ class OutputTest extends TestCase {
             STRUCT_TRANSFER_MAPPING,
             STRUCT_TRANSFER_OPERATOR
         )->output()));
+
+        $this->assertEquals(serialize([
+            'di' => 1,
+            'eman[!]' => 'John',
+            'xes[>]' => 'man'
+        ]),serialize($struct->transfer(
+            STRUCT_TRANSFER_OPERATOR,
+            STRUCT_TRANSFER_MAPPING
+        )->output()));
     }
 
     public function testFilterOutput(){

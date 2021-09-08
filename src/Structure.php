@@ -249,6 +249,9 @@ abstract class Structure {
             }
             $data[$fieldName] = $value;
         }
+        if($this->_transfers) {
+            $this->_cleanTransferTagCache();
+        }
         $this->_filters = $full ? $this->_filters : [];
         $this->_transfers = $full ? $this->_transfers : [];
         return $data;
@@ -341,36 +344,30 @@ abstract class Structure {
                 switch ($transfer) {
                     case STRUCT_TRANSFER_OPERATOR:
                         if(
-                            !([,,$transferResult] = $this->_getTagCache($field,STRUCT_TAG_OPERATOR)) and
-                            $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true)
+                            !([,,$transferResult] = $this->_getTransferTagCache($field,STRUCT_TAG_OPERATOR)) and
+                            $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true) and
+                            is_string($result)
                         ){
-                            $this->_setTagCache($field,STRUCT_TAG_OPERATOR,[
-                                $field,
-                                $field,
-                                $result
-                            ]);
-                            if(is_string($result)){
-                                $match = $this->_operatorPreg($result);
-                                if(isset($match['operator'])) {
-                                    $result = count($arr = explode(',',$match['column'])) > 1
-                                        ? $arr
-                                        : $match['column'];
-                                    $this->_setTagCache($field,STRUCT_TAG_OPERATOR,[
-                                        "{$field}[{$match['operator']}]",
-                                        $field,
-                                        $result
-                                    ]);
-                                }
+                            $match = $this->_operatorPreg($result);
+                            if(isset($match['operator'])) {
+                                $result = count($arr = explode(',',$match['column'])) > 1
+                                    ? $arr
+                                    : $match['column'];
+                                $this->_setTransferTagCache($field,STRUCT_TAG_OPERATOR,[
+                                    "[{$match['operator']}]",
+                                    $field,
+                                    $result
+                                ]);
                             }
                         }
                         $result = $transferResult ?? $result;
                         continue 2;
                     case STRUCT_TRANSFER_MAPPING:
                         if(
-                            !([,,$transferResult] = $this->_getTagCache($field, STRUCT_TAG_MAPPING)) and
+                            !([,,$transferResult] = $this->_getTransferTagCache($field, STRUCT_TAG_MAPPING)) and
                             $content = $this->_getContent($field,STRUCT_TAG_MAPPING, $this->_scene,true)
                         ){
-                            $this->_setTagCache($field,STRUCT_TAG_MAPPING,[
+                            $this->_setTransferTagCache($field,STRUCT_TAG_MAPPING,[
                                 trim((string)$content[0]),
                                 $field,
                                 $result
@@ -391,25 +388,28 @@ abstract class Structure {
      */
     protected function _getField(string $field, bool $transfer = true) : string
     {
+        $resField = $field;
         if($transfer){
             foreach ($this->_transfers as $transfer){
                 switch ($transfer) {
                     case STRUCT_TRANSFER_OPERATOR:
                         if($this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true)){
                             $this->_getValue($field);
-                            [$field,,] = $this->_getTagCache($field, STRUCT_TAG_OPERATOR);
+                            [$column, ,] = $this->_getTransferTagCache($field, STRUCT_TAG_OPERATOR);
+                            $resField .= $column;
                         }
                         continue 2;
                     case STRUCT_TRANSFER_MAPPING:
-                        if($this->_getContent($field,STRUCT_TAG_MAPPING, $this->_scene,true)){
+                        if($this->_getContent($field,STRUCT_TAG_MAPPING, $this->_scene,true)) {
                             $this->_getValue($field);
-                            [$field,,] = $this->_getTagCache($field, STRUCT_TAG_MAPPING);
+                            [$newField, ,] = $this->_getTransferTagCache($field, STRUCT_TAG_MAPPING);
+                            $resField = $resField === $field ? $newField : str_replace($field, $newField, $resField);
                         }
                         continue 2;
                 }
             }
         }
-        return $field;
+        return $resField;
     }
 
     /**
@@ -417,9 +417,9 @@ abstract class Structure {
      * @param string $tag
      * @param array $value
      */
-    protected function _setTagCache(string $field, string $tag, array $value) : void
+    protected function _setTransferTagCache(string $field, string $tag, array $value) : void
     {
-        $this->_cache[$this->_scene]["_{$tag}_{$field}"] = $value;
+        $this->_cache['transfer'][$this->_scene]["_{$tag}_{$field}"] = $value;
     }
 
     /**
@@ -427,11 +427,16 @@ abstract class Structure {
      * @param string $tag
      * @return array|null
      */
-    protected function _getTagCache(string $field, string $tag) : ?array
+    protected function _getTransferTagCache(string $field, string $tag) : ?array
     {
-        return isset($this->_cache[$this->_scene]["_{$tag}_{$field}"])
-            ? $this->_cache[$this->_scene]["_{$tag}_{$field}"]
+        return isset($this->_cache['transfer'][$this->_scene]["_{$tag}_{$field}"])
+            ? $this->_cache['transfer'][$this->_scene]["_{$tag}_{$field}"]
             : null;
+    }
+    
+    protected function _cleanTransferTagCache() : void
+    {
+        $this->_cache['transfer'] = [];
     }
 
     /**
