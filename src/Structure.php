@@ -11,7 +11,7 @@ abstract class Structure {
 
     protected $_filters = [];
     protected $_transfers = [];
-    protected $_scene;
+    protected $_scene = '';
 
     /**
      * @var ReflectionProperty[]
@@ -108,6 +108,7 @@ abstract class Structure {
     public function create(array $data = []): Structure
     {
         if($data){
+            $this->clean();
             $this->_raw = $data;
             foreach ($this->_fields as $field) {
                 $field = $field->getName();
@@ -179,7 +180,7 @@ abstract class Structure {
         $raw = $this->getRaw();
         $this->_filters = [];
         $this->_transfers = [];
-        $this->_scene = null;
+        $this->_scene = '';
         $this->_raw = [];
         $this->_errors = [];
         $this->_cache = [];
@@ -201,6 +202,7 @@ abstract class Structure {
             $field = $field->getName();
             $fieldName = $this->_getField($field);
             $value = $this->_getValue($field);
+
             if(!$full){
                 if($this->_getContent($field, STRUCT_TAG_GHOST, $this->_scene, true)){
                     continue;
@@ -208,47 +210,47 @@ abstract class Structure {
                 foreach ($this->_filters as $filter) {
                     switch ($filter) {
                         case STRUCT_FILTER_NULL:
-                            if(!$this->_valueComp($value, null)){
-                                continue 2;
+                            if($this->_valueComp($value, null)){
+                                continue 3;
                             }
                             break;
                         case STRUCT_FILTER_EMPTY:
-                            if(!$this->_valueComp($value, '')){
-                                continue 2;
+                            if($this->_valueComp($value, '')){
+                                continue 3;
                             }
                             break;
                         case STRUCT_FILTER_ZERO:
                             if($this->_valueComp($value, 0)){
-                                continue 2;
+                                continue 3;
                             }
                             break;
                         case STRUCT_FILTER_KEY:
                             if($this->_getContent($field, STRUCT_TAG_KEY, $this->_scene, true)){
-                                continue 2;
+                                continue 3;
                             }
                             break;
                         case STRUCT_FILTER_KEY_REVERSE:
                             if(!$this->_getContent($field, STRUCT_TAG_KEY, $this->_scene, true)){
-                                continue 2;
+                                continue 3;
                             }
                             break;
                         case STRUCT_FILTER_OPERATOR:
                             if($this->_getContent($field, STRUCT_TAG_OPERATOR, $this->_scene, true)){
-                                continue 2;
+                                continue 3;
                             }
                             break;
                         case STRUCT_FILTER_OPERATOR_REVERSE:
                             if(!$this->_getContent($field, STRUCT_TAG_OPERATOR, $this->_scene, true)){
-                                continue 2;
+                                continue 3;
                             }
                             break;
                     }
                 }
-                $this->_filters = [];
-                $this->_transfers = [];
             }
             $data[$fieldName] = $value;
         }
+        $this->_filters = $full ? $this->_filters : [];
+        $this->_transfers = $full ? $this->_transfers : [];
         return $data;
     }
 
@@ -339,42 +341,46 @@ abstract class Structure {
                 switch ($transfer) {
                     case STRUCT_TRANSFER_OPERATOR:
                         if(
-                            !$this->_getTagCache($field, STRUCT_TAG_OPERATOR) and
-                            $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true) and
-                            is_string($result)
+                            !([,,$transferResult] = $this->_getTagCache($field,STRUCT_TAG_OPERATOR)) and
+                            $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true)
                         ){
-                            $match = $this->_operatorPreg($result);
-                            $this->_setTagCache($field,STRUCT_TAG_OPERATOR,isset($match['operator'])
-                                ? [
-                                    "{$field}[{$match['operator']}]",
-                                    $field,
+                            $this->_setTagCache($field,STRUCT_TAG_OPERATOR,[
+                                $field,
+                                $field,
+                                $result
+                            ]);
+                            if(is_string($result)){
+                                $match = $this->_operatorPreg($result);
+                                if(isset($match['operator'])) {
                                     $result = count($arr = explode(',',$match['column'])) > 1
-                                            ? $arr
-                                            : $match['column']
-                                ]
-                                : [
-                                    $field,
-                                    $field,
-                                    $result
-                                ]);
+                                        ? $arr
+                                        : $match['column'];
+                                    $this->_setTagCache($field,STRUCT_TAG_OPERATOR,[
+                                        "{$field}[{$match['operator']}]",
+                                        $field,
+                                        $result
+                                    ]);
+                                }
+                            }
                         }
-                        break;
+                        $result = $transferResult ?? $result;
+                        continue 2;
                     case STRUCT_TRANSFER_MAPPING:
                         if(
-                            !$this->_getTagCache($field, STRUCT_TAG_MAPPING) and
+                            !([,,$transferResult] = $this->_getTagCache($field, STRUCT_TAG_MAPPING)) and
                             $content = $this->_getContent($field,STRUCT_TAG_MAPPING, $this->_scene,true)
                         ){
                             $this->_setTagCache($field,STRUCT_TAG_MAPPING,[
-                                trim((string)$content),
+                                trim((string)$content[0]),
                                 $field,
                                 $result
                             ]);
                         }
-                        break;
+                        $result = $transferResult ?? $result;
+                        continue 2;
                 }
             }
         }
-
         return $result;
     }
 
@@ -393,13 +399,13 @@ abstract class Structure {
                             $this->_getValue($field);
                             [$field,,] = $this->_getTagCache($field, STRUCT_TAG_OPERATOR);
                         }
-                        break;
+                        continue 2;
                     case STRUCT_TRANSFER_MAPPING:
                         if($this->_getContent($field,STRUCT_TAG_MAPPING, $this->_scene,true)){
                             $this->_getValue($field);
                             [$field,,] = $this->_getTagCache($field, STRUCT_TAG_MAPPING);
                         }
-                        break;
+                        continue 2;
                 }
             }
         }
@@ -512,10 +518,10 @@ abstract class Structure {
                         STRUCT_TAG_GHOST,
                         STRUCT_TAG_KEY,
                         STRUCT_TAG_OPERATOR,
-                        STRUCT_TAG_MAPPING
+                        STRUCT_TAG_MAPPING,
                     ]);
                     preg_match_all(
-                        "/@({$tags}})(?:\[(\w+)\])?\s+?([^@*\n]+)/",
+                        "/@({$tags}|})(?:\[(\w+)\])?\s+?([^@*\n]+)/",
                         $comment,
                         $matches
                     );
