@@ -62,6 +62,16 @@ abstract class Structure {
     }
 
     /**
+     * @param array $data
+     * @param string $scene
+     * @return Structure
+     */
+    public static function factory(array $data = [], string $scene = '') : Structure
+    {
+        return new static($data,$scene);
+    }
+
+    /**
      * @param int ...$filter
      * @return $this
      */
@@ -125,6 +135,9 @@ abstract class Structure {
                     }
                 }
                 if([$content, $error] = $this->_getContent($fieldName,STRUCT_TAG_RULE, $this->_scene, true)){
+                    if($this->_getValue($fieldName) === null){
+                        continue;
+                    }
                     [$mode, $c] = explode(':', $content, 2);
                     switch ($mode) {
                         case 'func':
