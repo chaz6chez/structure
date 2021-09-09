@@ -16,6 +16,9 @@ class RuleFloatTest extends TestCase {
         $this->assertEquals(false,$struct->hasError());
         $this->assertEquals(null,$struct->getError()->getMessage());
         $this->assertEquals(null,$struct->getError()->getCode());
+        $this->assertEquals(serialize([
+            'test' => 4.21
+        ]),serialize($struct->output()));
     }
 
     public function testError(){

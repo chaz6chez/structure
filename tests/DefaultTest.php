@@ -94,12 +94,16 @@ class DefaultTag extends Struct {
      * @default[bool] bool:false
      * @default[object] object:\Structure\Tests\DefaultTag
      * @default[method_1] method:_get
-     * @default[method_2] method:\Structure\Tests\DefaultTag,_get
+     * @default[method_2] method:\Structure\Tests\DefaultTag,_static_get
      * @default[func] func:get_current_user
      */
     public $name;
 
-    public static function _get(){
+    public function _get(){
+        return '7788';
+    }
+
+    public static function _static_get(){
         return '7788';
     }
 }

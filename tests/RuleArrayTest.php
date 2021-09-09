@@ -20,6 +20,9 @@ class RuleArrayTest extends TestCase {
         $this->assertEquals(false,$struct->hasError());
         $this->assertEquals(null,$struct->getError()->getMessage());
         $this->assertEquals(null,$struct->getError()->getCode());
+        $this->assertEquals(serialize([
+            'test' => ['1','2','3','4']
+        ]),serialize($struct->output()));
     }
 
     public function testError(){

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Structure;
 
 use ReflectionProperty;
+use Structure\Exceptions\StructureException;
 use Structure\Handlers\AbstractHandler;
 use InvalidArgumentException;
 
@@ -121,6 +122,7 @@ abstract class Structure {
     /**
      * @param bool $afresh
      * @return bool
+     * @throws StructureException
      */
     public function validate(bool $afresh = false) : bool
     {
@@ -136,21 +138,30 @@ abstract class Structure {
                     }
                 }
                 if([$content, $error] = $this->_getContent($fieldName,STRUCT_TAG_RULE, $this->_scene, true)){
-                    if($this->_getValue($fieldName) === null){
+                    $value = $this->_getValue($fieldName);
+                    if($value === null){
                         continue;
                     }
                     [$mode, $c] = explode(':', $content, 2);
                     switch ($mode) {
                         case 'func':
-                            if(!(is_callable($c) ? $c() : true)){
-                                $this->_addError($fieldName, $error);
+                            try {
+                                if(!(is_callable($c) ? $c($value) : true)){
+                                    $this->_addError($fieldName, $error);
+                                }
+                            }catch (\Throwable $throwable){
+                                throw new StructureException("rule:func->{{$fieldName}}" ,$throwable);
                             }
                             break;
                         case 'method':
-                            $c = explode(',',$c,2);
-                            $method = count($c) > 1 ? [$c[0],$c[1]] : [$this, $c[0]];
-                            if(!(is_callable($method) ? $method() : true)){
-                                $this->_addError($fieldName, $error);
+                            try {
+                                $c = explode(',',$c,2);
+                                $method = count($c) > 1 ? [$c[0],$c[1]] : [$this, $c[0]];
+                                if(!(is_callable($method) ? $method($value) : true)){
+                                    $this->_addError($fieldName, $error);
+                                }
+                            }catch (\Throwable $throwable){
+                                throw new StructureException("method:func->{{$fieldName}}" ,$throwable);
                             }
                             break;
                         default:
@@ -260,6 +271,7 @@ abstract class Structure {
     /**
      * @param bool $afresh
      * @return bool
+     * @throws StructureException
      */
     public function hasError(bool $afresh = false) : bool
     {
@@ -325,12 +337,16 @@ abstract class Structure {
                             $content = explode(',',$content,2);
                             $method = count($content) > 1 ? [$content[0],$content[1]] : [$this, $content[0]];
                             $result = is_callable($method) ? $method() : null;
-                        }catch (\Throwable $throwable){}
+                        }catch (\Throwable $throwable){
+                            // 忽略所有异常
+                        }
                         break;
                     case 'func':
                         try {
                             $result = function_exists($content) ? $content() : null;
-                        }catch (\Throwable $throwable){}
+                        }catch (\Throwable $throwable){
+                            // 忽略所有异常
+                        }
                         break;
                     default:
                         try{

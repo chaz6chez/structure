@@ -16,6 +16,9 @@ class RuleBoolTest extends TestCase {
         $this->assertEquals(false,$struct->hasError());
         $this->assertEquals(null,$struct->getError()->getMessage());
         $this->assertEquals(null,$struct->getError()->getCode());
+        $this->assertEquals(serialize([
+            'test' => true
+        ]),serialize($struct->output()));
 
         $struct->create([
             'test' => false
