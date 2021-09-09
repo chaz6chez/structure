@@ -315,25 +315,27 @@ abstract class Structure {
     protected function _getValue(string $field, bool $transfer = true)
     {
         $result = $this->{$field};
-        if($result === null and isset($this->_cache[$this->_scene][$field])){
+        if($result === null and !isset($this->_cache[$this->_scene][$field])){
             if([$content, ] = $this->_getContent($field, STRUCT_TAG_DEFAULT, $this->_scene, true)){
                 [$mode, $content] = explode(':', $content, 2);
                 switch ($mode){
                     // method:
                     case 'method':
-                        $content = explode(',',$content,2);
-                        $method = count($content) > 1 ? [$content[0],$content[1]] : [$this, $content[0]];
-                        $result = is_callable($method) ? $method() : null;
+                        try {
+                            $content = explode(',',$content,2);
+                            $method = count($content) > 1 ? [$content[0],$content[1]] : [$this, $content[0]];
+                            $result = is_callable($method) ? $method() : null;
+                        }catch (\Throwable $throwable){}
                         break;
                     case 'func':
-                        $result = function_exists($content) ? $content() : null;
+                        try {
+                            $result = function_exists($content) ? $content() : null;
+                        }catch (\Throwable $throwable){}
                         break;
                     default:
                         try{
                             $result = $this->_handler($mode)->default($content);
-                        }catch (InvalidArgumentException $exception){
-
-                        }
+                        }catch (InvalidArgumentException $exception){}
                         break;
                 }
             }

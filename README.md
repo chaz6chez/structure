@@ -172,10 +172,10 @@ class User extends Struct{
     /**
      * @default func:is_array              会找到is_array函数
      * @default method:_set                会定位当前类的_set方法
-     * @default method:Handler\Help,get    会定位Handler\Help类的get方法
+     * @default method:Handler\Help,get   会定位Handler\Help类的get方法
      */
     public $name;
-    public function _set(){
+    public static function _set(){
         return 'abc';
     }
 ````
@@ -215,11 +215,11 @@ class User extends Struct{
     /**
      * @rule func:is_array              会找到is_array函数
      * @rule method:_set                会定位当前类的_set方法
-     * @rule method:Handler\Help,get    会定位Handler\Help类的get方法
+     * @rule method:Handler\Help,get   会定位Handler\Help类的get方法
      */
     public $name;
     
-    public function _set($value) : bool
+    public static function _set($value) : bool
     {
         return $value === 'abc';
     }

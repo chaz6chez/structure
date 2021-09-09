@@ -26,8 +26,12 @@ class ObjectHandler extends AbstractHandler {
 
     public function default(string $default) : ?object
     {
-        if(class_exists($default, false)){
-            return new $default;
+        try {
+            if(class_exists($default, false)){
+                return new $default;
+            }
+        }catch (\Throwable $throwable){
+
         }
         return null;
     }

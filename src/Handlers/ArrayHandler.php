@@ -47,8 +47,8 @@ class ArrayHandler extends AbstractHandler {
 
     public function default(string $default) : ?array
     {
-        $array = @json_decode($default);
-        if(json_last_error() == JSON_ERROR_NONE and $this->filter($array)){
+        $array = @json_decode($default,true);
+        if(json_last_error() === JSON_ERROR_NONE and $this->filter($array)){
             return (array) $array;
         }
         return null;
