@@ -160,7 +160,7 @@ class User extends Struct{
      * @default float:1.1
      * @default object:Handler\Help
      * @default map:{"a":"1"}
-     * @default array:{"1"}
+     * @default array:["1"]
      * @default bool:true
      */
     public $name;
