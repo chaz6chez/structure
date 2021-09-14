@@ -18,14 +18,14 @@
     "autoload": {
         "psr-4": {
             "Structure\\": "src"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Structure\\Tests\\": "tests/"
         },
         "files": [
             "src/constant.php"
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Structure\\Tests\\": "tests/"
+        }
     }
 }
