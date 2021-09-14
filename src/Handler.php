@@ -65,7 +65,13 @@ class Handler {
     public static function optionsStrToArr(?string $options) : ?array
     {
         if($options){
+            if(preg_match('/\/([^)]*)\//', $options, $match)){
+                $options = str_replace($regex = $match[0], '', $options);
+            }
             $parts = explode(',', $options);
+            if(isset($regex)){
+                array_push($parts,(string)array_pop($parts) . $regex);
+            }
             $options = [];
             foreach ($parts as $part) {
                 $part = trim($part);

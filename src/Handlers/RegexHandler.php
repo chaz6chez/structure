@@ -14,7 +14,7 @@ class RegexHandler extends StringHandler {
     public function filter($value) : ?string
     {
         $value = parent::filter($value);
-        if (!preg_match($this->getOption('regex','/.?/'), $value)) {
+        if (!@preg_match($this->getOption('regex','/.?/'), $value)) {
             return $this->setPosition('_regex_');
         }
         return $value;
