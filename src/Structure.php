@@ -133,11 +133,17 @@ abstract class Structure {
                     continue;
                 }
                 if([, $error] = $this->_getContent($fieldName,STRUCT_TAG_REQUIRED, $this->_scene, true)){
+                    if(!is_string($error)){
+                        throw new StructureException("@required Syntax Error.{[{$this->_scene}]{$fieldName}}" );
+                    }
                     if($this->_getValue($fieldName) === null){
                         $this->_addError($fieldName, $error);
                     }
                 }
                 if([$content, $error] = $this->_getContent($fieldName,STRUCT_TAG_RULE, $this->_scene, true)){
+                    if(!is_string($error)){
+                        throw new StructureException("@rule Syntax Error.{[{$this->_scene}]{$fieldName}}" );
+                    }
                     $value = $this->_getValue($fieldName);
                     if($value === null){
                         continue;
@@ -150,7 +156,10 @@ abstract class Structure {
                                     $this->_addError($fieldName, $error);
                                 }
                             }catch (\Throwable $throwable){
-                                throw new StructureException("rule:func->{{$fieldName}}" ,$throwable);
+                                throw new StructureException(
+                                    "@rule Func Exception.{[{$this->_scene}]{$fieldName}}" ,
+                                    $throwable
+                                );
                             }
                             break;
                         case 'method':
@@ -161,7 +170,10 @@ abstract class Structure {
                                     $this->_addError($fieldName, $error);
                                 }
                             }catch (\Throwable $throwable){
-                                throw new StructureException("method:func->{{$fieldName}}" ,$throwable);
+                                throw new StructureException(
+                                    "@rule Method Exception.{[{$this->_scene}]{$fieldName}}" ,
+                                    $throwable
+                                );
                             }
                             break;
                         default:
@@ -172,7 +184,10 @@ abstract class Structure {
                                     $this->_addError($fieldName, $error, $handler->getPosition());
                                 }
                             }catch (InvalidArgumentException $exception){
-
+                                throw new StructureException(
+                                    "@rule Handler Exception. {[{$this->_scene}]{$fieldName}}" ,
+                                    $exception
+                                );
                             }
                             break;
                     }
@@ -477,6 +492,9 @@ abstract class Structure {
     protected function _getContent(string $field, string $tag, string $scene, bool $default = false) : ?array
     {
         if(isset($this->_analysis[$field][$tag][$scene])){
+            if(count($this->_analysis[$field][$tag][$scene]) < 2){
+                $this->_analysis[$field][$tag][$scene][] = null;
+            }
             return $this->_analysis[$field][$tag][$scene];
         }
         if($scene !== '' and $default){
