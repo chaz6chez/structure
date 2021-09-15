@@ -527,7 +527,7 @@ abstract class Structure {
      * @param string|null $position
      */
     protected function _addError(string $field, string $error, ?string $position = null){
-        [$msg, $code] = count($errors = explode(':', $error, 2)) !== 2 ? [$error, '500'] : $errors;
+        [$msg, $code] = count($errors = explode(':', $error, 2)) !== 2 ? [$error, null] : $errors;
         $this->_errors[] = new Error($field, $msg, $code, $position);
     }
 
