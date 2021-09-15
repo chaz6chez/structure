@@ -15,6 +15,10 @@ use Structure\Handlers\RegexHandler;
 use Structure\Handlers\StringHandler;
 use Structure\Handlers\URLHandler;
 
+/**
+ * Class Handler
+ * @package Structure
+ */
 class Handler {
 
     /**

@@ -147,7 +147,7 @@ class User extends Struct{
 | <a href="#@ghost">@ghost</a>| 无 |转换| 跳过输出 |
 | <a href="#@key">@key</a>| 无 |转换| 标记钥匙属性|
 | <a href="#@mapping">@mapping</a>| 映射键名 |转换| 映射键转换 |
-| <a href="#@operator">@operator</a>| 无 |转换| 键值特殊转换 |
+| <a href="#@operator">@operator</a>| true、func、method |转换| 键值特殊转换 |
 
 ### <a id="@default">@default</a>
 - 将该属性标记默认模式
@@ -217,7 +217,7 @@ class User extends Struct{
 
 ````injectablephp
     /**
-     * @rule func:is_array              会找到is_array函数
+     * @rule func:_set                  会找到_set函数
      * @rule method:_set                会定位当前类的_set方法
      * @rule method:Handler\Help,get   会定位Handler\Help类的get方法
      */
@@ -225,8 +225,15 @@ class User extends Struct{
     
     public static function _set($value) : bool
     {
-        return $value === 'abc';
+        return $value === '_method';
     }
+}
+
+
+function _set($value) : bool
+{
+    return $value === '_func';
+}
 ````
 ### <a id="@ghost">@ghost</a>
 - <a href="#输出">output()</a> 不会输出该标签
@@ -277,7 +284,7 @@ class User extends Struct{
 
 ### <a id="@operator">@operator</a>
 
-- 该标签为medoo语法定制
+- 以true为执行方式时，是为medoo语法定制
 
 - 通过 <a href="#转换">transfer()</a>-><a href="#输出">output()</a> 可以做到转换输出
 
@@ -297,6 +304,33 @@ class User extends Struct{
         'id[<>]' => ['123','456'],
     ];
 ````
+
+- 使用func、method进行转换
+  - **method:className,methodName 必须是静态方法**
+  - **方法执行过程中任何异常会转化成StructureException抛出**
+
+````injectablephp
+
+    /**
+     * @operator func:_add                  会找到_add函数
+     * @operator method:_add                会定位当前类的_set方法
+     * @operator method:Handler\Help,_add  会定位Handler\Help类的get方法
+     */
+    public $name;
+    
+    public static function _add($value)
+    {
+        return '_add_' . $value . '_method_';
+    }
+}
+
+
+function _add($value){
+    return '_add_' . $value . '_function_';
+}
+````
+
+
 #### **该标签在类型转换上并未完善，联合调用Medoo建议直接使用数组**
 
 - 在int、float的数据下，会有如下所示的影响

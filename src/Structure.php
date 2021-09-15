@@ -150,7 +150,7 @@ abstract class Structure {
                     }
                     [$mode, $c] = explode(':', $content, 2);
                     switch ($mode) {
-                        case 'func':
+                        case STRUCT_FUNCTION:
                             try {
                                 if(!(is_callable($c) ? $c($value) : true)){
                                     $this->_addError($fieldName, $error);
@@ -162,7 +162,7 @@ abstract class Structure {
                                 );
                             }
                             break;
-                        case 'method':
+                        case STRUCT_METHOD:
                             try {
                                 $c = explode(',',$c,2);
                                 $method = count($c) > 1 ? [$c[0],$c[1]] : [$this, $c[0]];
@@ -341,32 +341,47 @@ abstract class Structure {
      */
     protected function _getValue(string $field, bool $transfer = true)
     {
-        $result = $this->{$field};
+        $result = !isset($this->_cache[$this->_scene][$field]) ? $this->{$field} : $this->_cache[$this->_scene][$field];
         if($result === null and !isset($this->_cache[$this->_scene][$field])){
             if([$content, ] = $this->_getContent($field, STRUCT_TAG_DEFAULT, $this->_scene, true)){
-                [$mode, $content] = explode(':', $content, 2);
+                $contents = explode(':', $content, 2);
+                if(count($contents) !== 2){
+                    throw new StructureException("@default Syntax Error.{[{$this->_scene}]{$field}}");
+                }
+                [$mode, $content] = $contents;
                 switch ($mode){
                     // method:
-                    case 'method':
+                    case STRUCT_METHOD:
                         try {
                             $content = explode(',',$content,2);
                             $method = count($content) > 1 ? [$content[0],$content[1]] : [$this, $content[0]];
                             $result = is_callable($method) ? $method() : null;
                         }catch (\Throwable $throwable){
-                            // 忽略所有异常
+                            throw new StructureException(
+                                "@default Method Exception.{[{$this->_scene}]{$field}}" ,
+                                $throwable
+                            );
                         }
                         break;
-                    case 'func':
+                    case STRUCT_FUNCTION:
                         try {
                             $result = function_exists($content) ? $content() : null;
                         }catch (\Throwable $throwable){
-                            // 忽略所有异常
+                            throw new StructureException(
+                                "@default Func Exception.{[{$this->_scene}]{$field}}" ,
+                                $throwable
+                            );
                         }
                         break;
                     default:
                         try{
                             $result = $this->_handler($mode)->default($content);
-                        }catch (InvalidArgumentException $exception){}
+                        }catch (InvalidArgumentException $exception){
+                            throw new StructureException(
+                                "@default Handler Exception.{[{$this->_scene}]{$field}}" ,
+                                $exception
+                            );
+                        }
                         break;
                 }
             }
@@ -378,20 +393,51 @@ abstract class Structure {
                     case STRUCT_TRANSFER_OPERATOR:
                         if(
                             !([,,$transferResult] = $this->_getTransferTagCache($field,STRUCT_TAG_OPERATOR)) and
-                            $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true) and
+                            [$content,] = $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true) and
                             is_string($result)
                         ){
-                            $match = $this->_operatorPreg($result);
-                            if(isset($match['operator'])) {
-                                $result = count($arr = explode(',',$match['column'])) > 1
-                                    ? $arr
-                                    : $match['column'];
-                                $this->_setTransferTagCache($field,STRUCT_TAG_OPERATOR,[
-                                    "[{$match['operator']}]",
-                                    $field,
-                                    $result
-                                ]);
+                            [$mode, $content] = count($contents = explode(':', $content, 2)) !== 2
+                                ? [$content,null]
+                                : $contents;
+                            $key = '';
+                            switch ($mode){
+                                case STRUCT_METHOD:
+                                    try {
+                                        $content = explode(',',$content,2);
+                                        $method = count($content) > 1 ? [$content[0],$content[1]] : [$this, $content[0]];
+                                        $result = is_callable($method) ? $method($result) : null;
+                                    }catch (\Throwable $throwable){
+                                        throw new StructureException(
+                                            "@operator Method Exception.{[{$this->_scene}]{$field}}" ,
+                                            $throwable
+                                        );
+                                    }
+                                    break;
+                                case STRUCT_FUNCTION:
+                                    try {
+                                        $result = function_exists($content) ? $content($result) : null;
+                                    }catch (\Throwable $throwable){
+                                        throw new StructureException(
+                                            "@operator Func Exception.{[{$this->_scene}]{$field}}" ,
+                                            $throwable
+                                        );
+                                    }
+                                    break;
+                                default:
+                                    $match = $this->_operatorPreg($result);
+                                    if(isset($match['operator'])) {
+                                        $result = count($arr = explode(',',$match['column'])) > 1
+                                            ? $arr
+                                            : $match['column'];
+                                        $key = "[{$match['operator']}]";
+                                    }
+                                    break;
                             }
+                            $this->_setTransferTagCache($field,STRUCT_TAG_OPERATOR,[
+                                $key,
+                                $field,
+                                $result
+                            ]);
                         }
                         $result = $transferResult ?? $result;
                         continue 2;
@@ -466,7 +512,10 @@ abstract class Structure {
             ? $this->_cache['transfer'][$this->_scene]["_{$tag}_{$field}"]
             : null;
     }
-    
+
+    /**
+     * Clear Transfer Cache
+     */
     protected function _cleanTransferTagCache() : void
     {
         $this->_cache['transfer'] = [];
@@ -478,7 +527,7 @@ abstract class Structure {
      * @param string|null $position
      */
     protected function _addError(string $field, string $error, ?string $position = null){
-        [$msg, $code] = explode(':', $error, 2);
+        [$msg, $code] = count($errors = explode(':', $error, 2)) !== 2 ? [$error, '500'] : $errors;
         $this->_errors[] = new Error($field, $msg, $code, $position);
     }
 
@@ -502,7 +551,6 @@ abstract class Structure {
         }
         return null;
     }
-
 
     /**
      * @param mixed $actual

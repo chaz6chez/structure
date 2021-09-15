@@ -95,6 +95,38 @@ class OutputTest extends TestCase {
         )->output()));
     }
 
+    public function testTransferSceneOutput(){
+        $struct = new Output([
+            'id' => 1,
+            'name' => 'John',
+            'sex' => 'man[>]'
+        ],'method_1');
+
+        $this->assertEquals(serialize([
+            'id' => 1,
+            'name' => '> [John] <',
+            'sex[>]' => 'man'
+        ]),serialize($struct->transfer(STRUCT_TRANSFER_OPERATOR)->output()));
+
+        $this->assertEquals(serialize([
+            'di' => 1,
+            'eman' => '> [John] <',
+            'xes[>]' => 'man'
+        ]),serialize($struct->transfer(
+            STRUCT_TRANSFER_MAPPING,
+            STRUCT_TRANSFER_OPERATOR
+        )->output()));
+
+        $this->assertEquals(serialize([
+            'di' => 1,
+            'eman' => '> [John] <',
+            'xes[>]' => 'man'
+        ]),serialize($struct->transfer(
+            STRUCT_TRANSFER_OPERATOR,
+            STRUCT_TRANSFER_MAPPING
+        )->output()));
+    }
+
     public function testFilterOutput(){
         $struct = new Output([
             'id' => 0,
@@ -172,6 +204,8 @@ class Output extends Struct {
      * @key true
      * @mapping eman
      * @operator ture
+     * @operator[method_1] method:_transfer
+     * @operator[method_2] method:\Structure\Tests\Output,_transfer
      */
     public $name;
 
@@ -182,4 +216,9 @@ class Output extends Struct {
      * @operator ture
      */
     public $sex;
+
+    public static function _transfer($value): string
+    {
+        return "> [{$value}] <";
+    }
 }

@@ -21,3 +21,6 @@ const STRUCT_TAG_GHOST    = 'ghost';
 const STRUCT_TAG_OPERATOR = 'operator';
 const STRUCT_TAG_MAPPING  = 'mapping';
 const STRUCT_TAG_KEY      = 'key';
+
+const STRUCT_METHOD   = 'method';
+const STRUCT_FUNCTION = 'func';
