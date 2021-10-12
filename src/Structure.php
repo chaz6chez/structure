@@ -65,7 +65,7 @@ abstract class Structure {
     /**
      * @param array $data
      * @param string $scene
-     * @return Structure
+     * @return static
      */
     public static function factory(array $data = [], string $scene = '') : Structure
     {
@@ -74,7 +74,7 @@ abstract class Structure {
 
     /**
      * @param int ...$filter
-     * @return $this
+     * @return static
      */
     public function filter(int ...$filter) : Structure
     {
@@ -84,7 +84,7 @@ abstract class Structure {
 
     /**
      * @param int ...$transfer
-     * @return $this
+     * @return static
      */
     public function transfer(int ...$transfer) : Structure
     {
@@ -94,7 +94,7 @@ abstract class Structure {
 
     /**
      * @param string $scene
-     * @return $this
+     * @return static
      */
     public function scene(string $scene) : Structure
     {
@@ -199,7 +199,7 @@ abstract class Structure {
 
     /**
      * @param bool $createRaw
-     * @return $this
+     * @return static
      */
     public function clean(bool $createRaw = false): Structure
     {
