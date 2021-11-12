@@ -126,18 +126,18 @@ abstract class Structure {
     }
 
     /**
-     * @param array $data
+     * @param null|array $data
      * @return static
      */
-    public function create(array $data = []): Structure
+    public function create(?array $data = []): Structure
     {
-        if($data){
-            $this->clean();
-            $this->_raw = $data;
-            foreach ($this->_fields as $field) {
-                $field = $field->getName();
-                $this->{$field} = isset($data[$field]) ? $data[$field] : $this->{$field};
-            }
+        $this->clean();
+        $this->_raw = $data === null ? [] : $data;
+        foreach ($this->_fields as $field) {
+            $field = $field->getName();
+            $this->{$field} = isset($data[$field])
+                ? $data[$field]
+                : ($data === null ? $this->{$field} : null);
         }
         return $this;
     }
