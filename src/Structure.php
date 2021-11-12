@@ -15,6 +15,11 @@ abstract class Structure {
     protected $_scene = '';
 
     /**
+     * @var null|Structure
+     */
+    protected $_this;
+
+    /**
      * @var ReflectionProperty[]
      */
     protected $_fields;
@@ -60,6 +65,24 @@ abstract class Structure {
             ->_analysis()
             ->create($data)
             ->scene($scene);
+    }
+
+    /**
+     * 返回一个clone的加载了default至属性的Structure对象
+     * @return static
+     */
+    public function __invoke() : self
+    {
+        if(!$this->_this instanceof Structure){
+            $this->_this = clone $this;
+        }
+        foreach ($this->_this->_fields as $field){
+            $fieldName = $this->_this->_getField($field = $field->getName(), false);
+            $this->_this->{$fieldName} = ($this->{$fieldName} === null)
+                ? $this->_this->_getValue($field, false)
+                : $this->{$fieldName};
+        }
+        return $this->_this;
     }
 
     /**
@@ -204,6 +227,7 @@ abstract class Structure {
     public function clean(bool $createRaw = false): Structure
     {
         $raw = $this->getRaw();
+        $this->_this = null;
         $this->_filters = [];
         $this->_transfers = [];
         $this->_scene = '';

@@ -80,6 +80,15 @@ class DefaultTest extends TestCase {
             'name' => get_current_user(),
         ]),serialize($struct->output()));
     }
+
+    public function testInvoke(){
+        $struct = new DefaultTag();
+        $struct->scene('int');
+        $this->assertEquals(123,$struct()->name);
+        $struct->name = 321;
+        $this->assertEquals(321, $struct->name);
+        $this->assertEquals(321, $struct()->name);
+    }
 }
 
 class DefaultTag extends Struct {
