@@ -182,6 +182,26 @@ class User extends Struct{
     }
 ````
 
+- **@default仅在output()输出时生效，若要直接使用类属性获取@default赋值，请使用以下方法：**
+- **但不建议频繁使用，会多执行一次object clone操作**
+
+```injectablephp
+    // 以name的@default标签为string:John举例
+    /**
+     * @default string:John
+     */
+    public $name;
+ ```
+
+```injectablephp 
+    $struct = new Struct();
+    // @default无法生效，值为null
+    $struct->name;
+    
+    // @default可以生效，值为字符串John
+    $struct()->name;
+```
+
 ### <a id="@required">@required</a>
 
 ````injectablephp
