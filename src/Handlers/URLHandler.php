@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Structure\Handlers;
 
-class URLHandler extends AbstractHandler {
+class URLHandler extends StringHandler {
 
     protected $_defaultOptions = [
         'path' => false,
@@ -19,7 +19,7 @@ class URLHandler extends AbstractHandler {
         if ($this->getOption('query') and $this->getOption('query') === 'true') {
             $flags |= FILTER_FLAG_QUERY_REQUIRED;
         }
-        return filter_var($value, FILTER_VALIDATE_URL, $flags);
+        return filter_var($value, FILTER_VALIDATE_URL, $flags) ? (string)$value : null;
     }
 
     public function default(string $default) : ?string

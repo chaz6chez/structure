@@ -27,7 +27,7 @@ class StringHandler extends AbstractHandler {
         return $value;
     }
 
-    public function default(string $default) : string
+    public function default(string $default) : ?string
     {
         return trim($default);
     }
