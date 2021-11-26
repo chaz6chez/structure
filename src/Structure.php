@@ -171,7 +171,7 @@ abstract class Structure {
                     if($value === null){
                         continue;
                     }
-                    [$mode, $c] = explode(':', $content, 2);
+                    list($mode, $c) = explode(':', $content, 2);
                     switch ($mode) {
                         case STRUCT_FUNCTION:
                             try {
@@ -200,7 +200,7 @@ abstract class Structure {
                             }
                             break;
                         default:
-                            [$mode, $content] = explode(',', $content, 2);
+                            list($mode, $content) = explode(',', $content, 2);
                             try{
                                 $handler = $this->_handler($mode, Handler::optionsStrToArr($content));
                                 if(!$handler->validate($this->_getValue($fieldName))){

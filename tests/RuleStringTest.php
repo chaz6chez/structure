@@ -46,12 +46,11 @@ class RuleStringTest extends TestCase {
 
     }
 }
-
 class RuleString extends Struct {
 
     /**
      * @var
-     * @rule string,min:2,max:5,|format error:code1
+     * @rule string,min:2,max:5|format error:code1
      */
     public $test;
 }
