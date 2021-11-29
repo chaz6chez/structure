@@ -171,7 +171,7 @@ abstract class Structure {
                     if($value === null){
                         continue;
                     }
-                    list($mode, $c) = explode(':', $content, 2);
+                    [$mode, $c] = $this->_explode(':', $content, 2);
                     switch ($mode) {
                         case STRUCT_FUNCTION:
                             try {
@@ -200,7 +200,7 @@ abstract class Structure {
                             }
                             break;
                         default:
-                            list($mode, $content) = explode(',', $content, 2);
+                            [$mode, $content] = $this->_explode(',', $content, 2);
                             try{
                                 $handler = $this->_handler($mode, Handler::optionsStrToArr($content));
                                 if(!$handler->validate($this->_getValue($fieldName))){
@@ -584,6 +584,26 @@ abstract class Structure {
     protected function _valueComp($actual, $expected) : bool
     {
         return $actual === $expected;
+    }
+
+    /**
+     * @param string $separator
+     * @param string $string
+     * @param int|null $limit
+     * @return string[]
+     */
+    protected function _explode(string $separator, string $string, ?int $limit = null) :array
+    {
+        $res = ($string === '') ? [''] : explode($separator, $string, $limit);
+        $count = count($res);
+        if($limit and $count < $limit){
+            $count = $limit - $count;
+            do{
+                $res[] = '';
+                $count--;
+            }while($count > 0);
+        }
+        return $res;
     }
 
     /**
