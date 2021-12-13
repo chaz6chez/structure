@@ -304,9 +304,15 @@ function _set($value) : bool
 
 ### <a id="@operator">@operator</a>
 
-- 以true为执行方式时，是为medoo语法定制
+#### 1. 识别[medoo语法-where](https://medoo.in/api/where) 并转换 
+````injectablephp
+    /**
+     * @operator true 
+     */ 
+    public $name;
+````
 
-- 通过 <a href="#转换">transfer()</a>-><a href="#输出">output()</a> 可以做到转换输出
+通过 <a href="#转换">transfer()</a>-><a href="#输出">output()</a> 可以做到转换输出
 
 ````injectablephp
     // @operator true
@@ -325,36 +331,9 @@ function _set($value) : bool
     ];
 ````
 
-- 使用func、method进行转换
-  - **method:className,methodName 必须是静态方法**
-  - **方法执行过程中任何异常会转化成StructureException抛出**
-
-````injectablephp
-
-    /**
-     * @operator func:_add                  会找到_add函数
-     * @operator method:_add                会定位当前类的_set方法
-     * @operator method:Handler\Help,_add  会定位Handler\Help类的get方法
-     */
-    public $name;
-    
-    public static function _add($value)
-    {
-        return '_add_' . $value . '_method_';
-    }
-}
-
-
-function _add($value){
-    return '_add_' . $value . '_function_';
-}
-````
-
-
-#### **该标签在类型转换上并未完善，联合调用Medoo建议直接使用数组**
-
-- 在int、float的数据下，会有如下所示的影响
-
+    2.2以上版本完善了该标签下的类型转换
+    2.2以下版本中不会对类型转换
+##### 2.2以下版本：
 ````injectablephp
     // @operator true
     $user->id = '123[>]';
@@ -368,6 +347,141 @@ function _add($value){
        'id[>]' => 123
     ];
     // 此种状况会影响数据库查询的索引
+````
+##### 2.2以上版本：
+
+- 不仅可以配合medoo语法做处理转换，也可以直接做类型转换
+- 字符串类型的数字默认会根据值类型转换
+  - 整型内容字符串转换成整型
+  - 小数字符串转换成浮点型
+
+````injectablephp
+    // @operator true
+    $user->id = '123[>]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id[>]' => 123
+    ];
+    
+    // @operator true
+    $user->id = '123';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id' => 123
+    ];
+    
+    $user->id = '1.23[>]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 float
+    [
+        'id[>]' => 1.23
+    ];
+
+    $user->id = '1.23';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出
+    [
+        'id' => 1.23
+    ];
+````
+
+- 可以使用强制转换标签
+
+
+````injectablephp
+
+# String :
+
+    // @operator true
+    $user->id = '123[String][>]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id[>]' => '123'
+    ];
+    
+    // @operator true
+    $user->id = '123[String]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id' => '123'
+    ];
+
+# Int ：
+
+    // @operator true
+    $user->id = '1[Int][>]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id[>]' => 1
+    ];
+    
+    // @operator true
+    $user->id = '1[Int]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id' => 1
+    ];
+
+
+# Float ：
+
+    // @operator true
+    $user->id = '123[Float][>]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id[>]' => 123.0
+    ];
+    
+    // @operator true
+    $user->id = '123[Float]';
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id' => 123.0
+    ];
+
+# Bool ：
+
+    // @operator true
+    $user->id = '1[Bool][>]'; // 0 false
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id[>]' => true
+    ];
+    
+    // @operator true
+    $user->id = '1[Bool]'; // 0 false
+    $user->transfer(STRUCT_TRANSFER_OPERATOR)->output();
+    // 以上会输出 int
+    [
+        'id' => true
+    ];
+````  
+
+
+
+
+
+#### 2.使用func、method进行转换
+  - **method:className,methodName 必须是静态方法**
+  - **方法执行过程中任何异常会转化成StructureException抛出**
+
+````injectablephp
+
+    /**
+     * @operator func:_add                  相当于_add($name)
+     * @operator method:_add                相当于$this->_add($name)
+     * @operator method:Handler\Help,_add  相当于Handler\Help::_add($name)
+     */
+    public $name;
 ````
 
 
@@ -461,7 +575,7 @@ function _add($value){
 
 - <a id="过滤">过滤</a>
   - STRUCT_FILTER_NULL
-  - STRUCT_FILTER_EMPTY 
+  - STRUCT_FILTER_EMPTY
   - STRUCT_FILTER_ZERO
   - STRUCT_FILTER_KEY
   - STRUCT_FILTER_KEY_REVERSE

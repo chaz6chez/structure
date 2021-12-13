@@ -17,9 +17,9 @@ class RuleObjectTest extends TestCase {
         $this->assertEquals(false,$struct->hasError());
         $this->assertEquals(null,$struct->getError()->getMessage());
         $this->assertEquals(null,$struct->getError()->getCode());
-        $this->assertEquals(serialize([
+        $this->assertEquals(json_encode([
             'test' => new RuleObject()
-        ]),serialize($struct->output()));
+        ]),json_encode($struct->output()));
     }
 
     public function testError(){

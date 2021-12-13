@@ -65,10 +65,13 @@ class RuleMethodTest extends TestCase {
         $struct = new RuleMethod([
             'test' => true
         ],'method_4');
-        $this->expectException(StructureException::class);
+//        $this->expectException(StructureException::class);
 
-        $this->assertEquals(true,$struct->validate());
-        $this->assertEquals(true,$struct->hasError());
+//        $this->assertEquals(true,$struct->validate());
+//        $this->assertEquals(true,$struct->hasError());
+
+        $this->assertEquals(false,$struct->validate());
+        $this->assertEquals(false,$struct->hasError());
 
     }
 

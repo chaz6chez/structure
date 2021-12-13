@@ -417,8 +417,7 @@ abstract class Structure {
                     case STRUCT_TRANSFER_OPERATOR:
                         if(
                             !([,,$transferResult] = $this->_getTransferTagCache($field,STRUCT_TAG_OPERATOR)) and
-                            [$content,] = $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true) and
-                            is_string($result)
+                            [$content,] = $this->_getContent($field,STRUCT_TAG_OPERATOR, $this->_scene,true)
                         ){
                             [$mode, $content] = count($contents = explode(':', $content, 2)) !== 2
                                 ? [$content,null]
@@ -448,13 +447,16 @@ abstract class Structure {
                                     }
                                     break;
                                 default:
-                                    $match = $this->_operatorPreg($result);
-                                    if(isset($match['operator'])) {
-                                        $result = count($arr = explode(',',$match['column'])) > 1
-                                            ? $arr
-                                            : $match['column'];
-                                        $key = "[{$match['operator']}]";
+                                    if(is_string($result)){
+                                        $match = $this->_operatorPreg($result);
+                                        if(isset($match['operator'])) {
+                                            $result = count($arr = explode(',',$match['column'])) > 1
+                                                ? $arr
+                                                : $match['column'];
+                                            $key = "[{$match['operator']}]";
+                                        }
                                     }
+                                    $result = $this->_operatorTypePreg($result);
                                     break;
                             }
                             $this->_setTransferTagCache($field,STRUCT_TAG_OPERATOR,[
@@ -630,6 +632,53 @@ abstract class Structure {
             $match
         );
         return $match;
+    }
+
+    /**
+     * @param $value
+     * @return mixed
+     */
+    private function _operatorTypePreg($value)
+    {
+        if(is_array($value)){
+            foreach ($value as &$v){
+                $v = $this->_operatorTypePreg($v);
+            }
+        }
+        if(is_string($value)){
+            preg_match(
+                '/(?<column>[\s\S]*(?=\[(?<type>String|Int|Float|Bool)\]$)|[\s\S]*)/',
+                $value,
+                $match
+            );
+            $value = $match['column'];
+            $type = isset($match['type']) ? $match['type'] : null;
+            switch ($type) {
+                case 'String':
+                    $value = (string)$value;
+                    break;
+                case 'Int':
+                    $value = (int)$value;
+                    break;
+                case 'Float':
+                    $value = (float)$value;
+                    break;
+                case 'Bool':
+                    $value = (bool)$value;
+                    break;
+                default:
+                    if(is_numeric($value)){
+                        if(stripos($value,'.')){
+                            $value = (float)$value;
+                        }else{
+                            $value = (int)$value;
+                        }
+                    }
+                    break;
+            }
+        }
+
+        return $value;
     }
 
     /**

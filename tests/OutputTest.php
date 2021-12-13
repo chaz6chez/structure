@@ -95,6 +95,80 @@ class OutputTest extends TestCase {
         )->output()));
     }
 
+    public function testTransferOperatorOutput(){
+        $struct = new Output();
+
+        $struct->create([
+            'id' => 1,
+            'name' => '123[!]',
+            'sex' => '1.01[>]'
+        ]);
+        $this->assertEquals(serialize([
+            'id' => 1,
+            'name[!]' => 123,
+            'sex[>]' => 1.01
+        ]),serialize($struct->transfer(STRUCT_TRANSFER_OPERATOR)->output()));
+
+        $struct->create([
+            'id' => 1,
+            'name' => '123,456[<>]',
+            'sex' => 'abc[>]'
+        ]);
+        $this->assertEquals(serialize([
+            'id' => 1,
+            'name[<>]' => [123,456],
+            'sex[>]' => 'abc'
+        ]),serialize($struct->transfer(STRUCT_TRANSFER_OPERATOR)->output()));
+
+        $struct->create([
+            'id' => 1,
+            'name' => '123[String],456[Float][<>]',
+            'sex' => '1[Bool][>]'
+        ]);
+        $this->assertEquals(serialize([
+            'id' => 1,
+            'name[<>]' => ['123',456.0],
+            'sex[>]' => true
+        ]),serialize($struct->transfer(STRUCT_TRANSFER_OPERATOR)->output()));
+
+        $struct->create([
+            'id' => 1,
+            'name' => [
+                [
+                    '123[String]',
+                    [
+                        '1[Float]'
+                    ]
+                ],
+                '0[Int]',
+                '1[Bool]',
+                'abc',
+                '1',
+                '1.11',
+                true
+            ],
+            'sex' => '0[Bool][>]'
+        ]);
+        $this->assertEquals(serialize([
+            'id' => 1,
+            'name' => [
+                [
+                    '123',
+                    [
+                        1.0
+                    ]
+                ],
+                0,
+                true,
+                'abc',
+                1,
+                1.11,
+                true
+            ],
+            'sex[>]' => false
+        ]),serialize($struct->transfer(STRUCT_TRANSFER_OPERATOR)->output()));
+    }
+
     public function testTransferSceneOutput(){
         $struct = new Output([
             'id' => 1,

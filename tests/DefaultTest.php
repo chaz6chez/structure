@@ -54,9 +54,9 @@ class DefaultTest extends TestCase {
 
     public function testObject(){
         $struct = new DefaultTag([],'object');
-        $this->assertEquals(serialize([
+        $this->assertEquals(json_encode([
             'name' => new DefaultTag(),
-        ]),serialize($struct->output()));
+        ]),json_encode($struct->output()));
     }
 
     public function testMethod(){
